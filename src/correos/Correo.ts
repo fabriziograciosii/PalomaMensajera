@@ -1,6 +1,8 @@
 import type { IContactoConsulta } from "../contactos/IContactoConsulta"
+import type { ICorreo } from "./ICorreo"
 
-export class Correo {
+
+export class Correo implements ICorreo {
 
     private readonly _id: number
 
@@ -78,10 +80,26 @@ export class Correo {
     esValido(): boolean {
 
         const tieneAsunto = this._asunto.trim().length > 0
-        
+
         const tieneDestinatarios = this._destinatarios.length > 0
 
         return this.esBorradorValido() && tieneAsunto && tieneDestinatarios
+    }
+
+
+        setAsunto(asunto: string): void {
+        this._asunto = asunto
+    }
+
+    setCuerpo(cuerpo: string): void {
+        this._cuerpo = cuerpo
+    }
+
+    setDestinatarios(destinatarios: IContactoConsulta[]): boolean {
+        const validos = destinatarios.every(destinatario => destinatario.esValido())
+
+        this._destinatarios = validos ? [...destinatarios] : this._destinatarios
+        return validos
     }
 
 

@@ -3,9 +3,13 @@ import { Agenda } from "../src/contactos/Agenda"
 import { Contacto } from "../src/contactos/Contacto"
 import { Correo } from "../src/correos/Correo"
 import type { ICorreoConsulta } from "../src/correos/ICorreoConsulta"
+import type { ICorreo } from "../src/correos/ICorreo"
+
 
 const ana = new Contacto("Ana Pérez", "ana@ucp.edu.ar")
+
 const jose = new Contacto("José Fernandez", "fernandezjose_cen@ucp.edu.ar")
+
 const marta = new Contacto("Marta Díaz", "marta@ucp.edu.ar")
 
 describe("creación de un correo", () => {
@@ -14,7 +18,9 @@ describe("creación de un correo", () => {
 
         expect(correo.getId()).toBe(1)
         expect(correo.getAsunto()).toBe("Examen final")
+
         expect(correo.getCuerpo()).toBe("Se toma el lunes")
+
         expect(correo.getRemitente()).toBe(ana)
         expect(correo.getDestinatarios().length).toBe(1)
         expect(correo.getDestinatarios()[0]).toBe(jose)
@@ -64,7 +70,7 @@ describe("creación de un correo", () => {
 
     test("cada correo conserva su propia identidad", () => {
         const primero = new Correo(1, "Hola", "Texto", ana, [jose])
-        
+
         const segundo = new Correo(2, "Hola", "Texto", ana, [jose])
 
         expect(primero.getId()).not.toBe(segundo.getId())
@@ -213,4 +219,94 @@ describe("validez como borrador", () => {
     })
 
 
+})
+
+describe("modificar un correo", () => {
+
+    test("setAsunto cambia el asunto", () => {
+
+        const correo = new Correo(1, "Viejo", "Texto", ana, [jose])
+
+        correo.setAsunto("Nuevo")
+
+        expect(correo.getAsunto()).toBe("Nuevo")
+
+    })
+
+    test("setCuerpo cambia el cuerpo", () => {
+
+        const correo = new Correo(1, "Hola", "Viejo", ana, [jose])
+
+        correo.setCuerpo("Nuevo")
+
+        expect(correo.getCuerpo()).toBe("Nuevo")
+    })
+
+    test("setDestinatarios cambia los destinatarios si todos son válidos", () => {
+
+        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+
+        expect(correo.setDestinatarios([jose, marta])).toBe(true)
+
+        expect(correo.getDestinatarios().length).toBe(2)
+    })
+
+    test("setDestinatarios con un contacto inválido devuelve false y conserva los anteriores", () => {
+
+        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+
+        const invalido = new Contacto("Marta", "sin-arroba")
+
+        expect(correo.setDestinatarios([marta, invalido])).toBe(false)
+        expect(correo.getDestinatarios().length).toBe(1)
+
+        expect(correo.getDestinatarios()[0]).toBe(jose)
+    })
+
+    test("modificar la lista que se pasó a setDestinatarios no cambia los destinatarios", () => {
+
+        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+
+        const lista = [marta]
+
+        correo.setDestinatarios(lista)
+        lista.push(jose)
+
+        expect(correo.getDestinatarios().length).toBe(1)
+    })
+
+    test("los cambios no modifican el id ni el remitente", () => {
+
+        const correo = new Correo(7, "Viejo", "Texto", ana, [jose])
+
+        correo.setAsunto("Nuevo")
+        correo.setCuerpo("Otro")
+
+        correo.setDestinatarios([marta])
+
+        expect(correo.getId()).toBe(7)
+
+        expect(correo.getRemitente()).toBe(ana)
+    })
+
+    test("un borrador incompleto se puede completar hasta que sea válido para enviar", () => {
+
+        const correo = new Correo(1, "", "", ana, [])
+
+        expect(correo.esValido()).toBe(false)
+
+        correo.setAsunto("Examen")
+        correo.setDestinatarios([jose])
+
+        expect(correo.esValido()).toBe(true)
+    })
+
+    test("un correo se puede usar a través de ICorreo", () => {
+        const correo: ICorreo = new Correo(1, "Viejo", "Texto", ana, [jose])
+
+        correo.setAsunto("Nuevo")
+
+        expect(correo.getAsunto()).toBe("Nuevo")
+    })
+    
 })
