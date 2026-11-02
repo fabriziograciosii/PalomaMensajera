@@ -1,8 +1,8 @@
 export interface IContactoConsulta {
+    getNombreCompleto(): string
 
-    getNombreCompleto(): string 
-    getDireccion(): string 
+    getDireccion(): string
+    
     tieneDireccion(otraDireccion: string): boolean
     esValido(): boolean
-    
 }
