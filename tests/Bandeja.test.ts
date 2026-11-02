@@ -17,7 +17,7 @@ describe('Entidad Bandeja (RF-06)', () => {
 
     test('Permite agregar un correo y consultarlo después', () => {
         const bandeja = new Bandeja(TipoBandeja.ENTRADA);
-        const correo = new Correo(1, remitente, 'Asunto', 'Cuerpo', [destinatario]);
+        const correo = new Correo(1, 'Asunto', 'Cuerpo', remitente, [destinatario]);
 
         const agregado = bandeja.agregar(correo);
 
@@ -28,7 +28,7 @@ describe('Entidad Bandeja (RF-06)', () => {
 
     test('Rechaza agregar dos veces el mismo correo (evita duplicados)', () => {
         const bandeja = new Bandeja(TipoBandeja.ENTRADA);
-        const correo = new Correo(1, remitente, 'Asunto', 'Cuerpo', [destinatario]);
+        const correo = new Correo(1, 'Asunto', 'Cuerpo', remitente, [destinatario]);
         bandeja.agregar(correo);
 
         const agregadoDeNuevo = bandeja.agregar(correo);
@@ -39,7 +39,7 @@ describe('Entidad Bandeja (RF-06)', () => {
 
     test('Permite quitar un correo que está en la bandeja', () => {
         const bandeja = new Bandeja(TipoBandeja.ENTRADA);
-        const correo = new Correo(1, remitente, 'Asunto', 'Cuerpo', [destinatario]);
+        const correo = new Correo(1, 'Asunto', 'Cuerpo', remitente, [destinatario]);
         bandeja.agregar(correo);
 
         const quitado = bandeja.quitar(correo);
@@ -50,7 +50,7 @@ describe('Entidad Bandeja (RF-06)', () => {
 
     test('Quitar un correo que no está en la bandeja devuelve false', () => {
         const bandeja = new Bandeja(TipoBandeja.ENTRADA);
-        const correo = new Correo(1, remitente, 'Asunto', 'Cuerpo', [destinatario]);
+        const correo = new Correo(1, 'Asunto', 'Cuerpo', remitente, [destinatario]);
 
         expect(bandeja.quitar(correo)).toBe(false);
     });

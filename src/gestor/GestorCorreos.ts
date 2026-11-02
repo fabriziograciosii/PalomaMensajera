@@ -6,7 +6,6 @@ import { Correo } from '../correos/Correo';
 import { IContactoConsulta } from '../contactos/IContactoConsulta';
 
 export class GestorCorreos implements IGestorCorreos {
-    // Una bandeja por tipo, armada con reduce (sin switch por tipo de bandeja).
     private readonly _bandejas: Record<TipoBandeja, Bandeja> = Object.values(TipoBandeja).reduce(
         (acumulado, tipo) => ({ ...acumulado, [tipo]: new Bandeja(tipo) }),
         {} as Record<TipoBandeja, Bandeja>
@@ -17,27 +16,25 @@ export class GestorCorreos implements IGestorCorreos {
     private readonly _bandejaOrigenAntesDeEliminar: Map<number, TipoBandeja> = new Map();
     private _siguienteId: number = 1;
 
-    // Un borrador siempre se puede crear, aunque esté incompleto: su validez recién se exige al enviarlo.
     crearBorrador(
         remitente: IContactoConsulta,
         asunto: string = '',
         cuerpo: string = '',
         destinatarios: ReadonlyArray<IContactoConsulta> = []
     ): ICorreoConsulta {
-        const correo = new Correo(this.generarId(), remitente, asunto, cuerpo, destinatarios);
+        const correo = new Correo(this.generarId(), asunto, cuerpo, remitente, [...destinatarios]);
         this.registrarCorreo(correo, TipoBandeja.BORRADORES);
 
         return correo;
     }
 
-    // Un correo recibido no puede quedar incompleto: si no es válido, no se registra.
     recibirCorreo(
         remitente: IContactoConsulta,
         asunto: string,
         cuerpo: string,
         destinatarios: ReadonlyArray<IContactoConsulta>
     ): ICorreoConsulta | undefined {
-        const correo = new Correo(this.generarId(), remitente, asunto, cuerpo, destinatarios);
+        const correo = new Correo(this.generarId(), asunto, cuerpo, remitente, [...destinatarios]);
         const puedeRecibirse = correo.esValido();
 
         puedeRecibirse ? this.registrarCorreo(correo, TipoBandeja.ENTRADA) : null;
@@ -52,7 +49,7 @@ export class GestorCorreos implements IGestorCorreos {
         cambios.asunto !== undefined && correo !== undefined ? correo.setAsunto(cambios.asunto) : null;
         cambios.cuerpo !== undefined && correo !== undefined ? correo.setCuerpo(cambios.cuerpo) : null;
         cambios.destinatarios !== undefined && correo !== undefined
-            ? correo.setDestinatarios(cambios.destinatarios)
+            ? correo.setDestinatarios([...cambios.destinatarios])
             : null;
 
         return correo !== undefined;
@@ -98,9 +95,6 @@ export class GestorCorreos implements IGestorCorreos {
         this._ubicacionActual.set(correo.getId(), destino);
     }
 
-    // Único lugar donde un correo cambia de bandeja: lo saca de la actual y lo mete en la nueva,
-    // así nunca puede quedar duplicado ni perteneciendo a dos bandejas a la vez.
-    // Los métodos públicos ya garantizaron que el correo y su ubicación existen antes de llamar a este.
     private moverCorreo(id: number, destino: TipoBandeja): void {
         const correo = this._correosPorId.get(id) as Correo;
         const origen = this._ubicacionActual.get(id) as TipoBandeja;
