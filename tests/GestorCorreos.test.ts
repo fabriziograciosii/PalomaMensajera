@@ -64,3 +64,25 @@ describe('GestorCorreos - Borradores (RF-07)', () => {
         expect(gestor.consultarBandeja(TipoBandeja.BORRADORES).length).toBe(1);
     });
 });
+
+describe('GestorCorreos - Bandejas y clasificación (RF-06)', () => {
+    const remitente = new Contacto('Ana Pérez', 'ana@ucp.edu.ar');
+    const destinatario = new Contacto('Luis Gómez', 'luis@ucp.edu.ar');
+
+    test('Un correo recibido queda en la Bandeja de Entrada', () => {
+        const gestor = new GestorCorreos();
+
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
+
+        expect(correo).not.toBeUndefined();
+        expect(gestor.consultarBandeja(TipoBandeja.ENTRADA).map((c) => c.getId())).toContain(correo!.getId());
+    });
+
+    test('Un correo recibido sin asunto o sin destinatarios es rechazado', () => {
+        const gestor = new GestorCorreos();
+
+        expect(gestor.recibirCorreo(remitente, '', 'Hola', [destinatario])).toBeUndefined();
+        expect(gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [])).toBeUndefined();
+        expect(gestor.consultarBandeja(TipoBandeja.ENTRADA).length).toBe(0);
+    });
+});
