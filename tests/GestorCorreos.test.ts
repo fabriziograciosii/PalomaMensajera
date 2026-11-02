@@ -123,4 +123,32 @@ describe('GestorCorreos - Bandejas y clasificación (RF-06)', () => {
 
         expect(gestor.eliminarCorreo(correo.getId())).toBe(false);
     });
+
+        test('Un correo pertenece a una única bandeja a la vez: enviar lo saca de Borradores', () => {
+        const gestor = new GestorCorreos();
+        const borrador = gestor.crearBorrador(remitente, 'Examen', 'Trae tu DNI', [destinatario]);
+
+        gestor.enviarBorrador(borrador.getId());
+
+        const enTodasLasBandejas = Object.values(TipoBandeja)
+            .map((tipo) => gestor.consultarBandeja(tipo).filter((c) => c.getId() === borrador.getId()).length)
+            .reduce((total, cantidad) => total + cantidad, 0);
+
+        expect(enTodasLasBandejas).toBe(1);
+    });
+
+    test('No se generan duplicados al mover un correo varias veces (eliminar y restaurar)', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+
+        gestor.eliminarCorreo(correo.getId());
+        gestor.restaurarCorreo(correo.getId());
+
+        expect(gestor.consultarBandeja(TipoBandeja.ENTRADA).length).toBe(1);
+    });
+
+    test('Mover un correo que no existe devuelve false', () => {
+        const gestor = new GestorCorreos();
+        expect(gestor.eliminarCorreo(999)).toBe(false);
+    });
 });
