@@ -42,4 +42,25 @@ describe('GestorCorreos - Borradores (RF-07)', () => {
 
         expect(gestor.editarBorrador(recibido!.getId(), { asunto: 'Otro' })).toBe(false);
     });
+
+        test('Enviar un borrador válido lo traslada a la Bandeja de Enviados', () => {
+        const gestor = new GestorCorreos();
+        const borrador = gestor.crearBorrador(remitente, 'Examen', 'Trae tu DNI', [destinatario]);
+
+        const enviado = gestor.enviarBorrador(borrador.getId());
+
+        expect(enviado).toBe(true);
+        expect(gestor.consultarBandeja(TipoBandeja.BORRADORES).length).toBe(0);
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).map((c) => c.getId())).toContain(borrador.getId());
+    });
+
+    test('Un borrador inválido no puede enviarse', () => {
+        const gestor = new GestorCorreos();
+        const borrador = gestor.crearBorrador(remitente); // sin asunto ni destinatarios
+
+        const enviado = gestor.enviarBorrador(borrador.getId());
+
+        expect(enviado).toBe(false);
+        expect(gestor.consultarBandeja(TipoBandeja.BORRADORES).length).toBe(1);
+    });
 });
