@@ -65,5 +65,24 @@ export class Correo {
     
     }
 
+        esBorradorValido(): boolean {
+
+        const idValido = this._id > 0 && this._id % 1 === 0
+
+        const remitenteValido = this._remitente.esValido()
+        const destinatariosValidos = this._destinatarios.every(destinatario => destinatario.esValido())
+
+        return idValido && remitenteValido && destinatariosValidos
+    }
+
+    esValido(): boolean {
+
+        const tieneAsunto = this._asunto.trim().length > 0
+        
+        const tieneDestinatarios = this._destinatarios.length > 0
+
+        return this.esBorradorValido() && tieneAsunto && tieneDestinatarios
+    }
+
 
 }
