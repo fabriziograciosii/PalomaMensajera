@@ -6,6 +6,8 @@ import { Contacto } from "../src/contactos/Contacto"
 
 import type { IAgenda } from "../src/contactos/IAgenda"
 
+import { Correo } from "../src/correos/Correo"
+
 describe("estado inicial", () => {
 
     test("una agenda nueva está vacía", () => {
@@ -172,4 +174,25 @@ describe("uso a través de IAgenda", () => {
 
         expect(agenda.obtenerContactos().length).toBe(1)
     })
+
+    describe("eliminar y correos historicos", () => {
+
+    test("eliminar un contacto de la agenda no borra los correos historicos que lo referencian", () => {
+        const agenda = new Agenda()
+
+        const ana = new Contacto("Ana Pérez", "ana@ucp.edu.ar")
+        const luis = new Contacto("Luis Gómez", "luis@ucp.edu.ar")
+
+        agenda.agregar(ana)
+        agenda.agregar(luis)
+
+        const correo = new Correo(1, "Examen", "Trae tu DNI", ana, [luis])
+
+        agenda.eliminar("ana@ucp.edu.ar")
+
+        expect(agenda.consultar("ana@ucp.edu.ar")).toBeUndefined()
+        expect(correo.getRemitente().getDireccion()).toBe("ana@ucp.edu.ar")
+        expect(correo.getDestinatarios()[0].getDireccion()).toBe("luis@ucp.edu.ar")
+    })
+})
 })

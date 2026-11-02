@@ -19,11 +19,11 @@ export interface IGestorCorreos {
         cuerpo?: string,
         destinatarios?: ReadonlyArray<IContactoConsulta>
     ): ICorreoConsulta;
-    recibirCorreo(
+        recibirCorreo(
         remitente: IContactoConsulta,
-        asunto?: string,
-        cuerpo?: string,
-        destinatarios?: ReadonlyArray<IContactoConsulta>
+        asunto: string,
+        cuerpo: string,
+        destinatarios: ReadonlyArray<IContactoConsulta>
     ): ICorreoConsulta | undefined;
     editarBorrador(id: number, cambios: CambiosBorrador): boolean;
     enviarBorrador(id: number): boolean;
