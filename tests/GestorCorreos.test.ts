@@ -85,4 +85,42 @@ describe('GestorCorreos - Bandejas y clasificación (RF-06)', () => {
         expect(gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [])).toBeUndefined();
         expect(gestor.consultarBandeja(TipoBandeja.ENTRADA).length).toBe(0);
     });
+
+        test('Eliminar un correo lo traslada a Eliminados y lo saca de su bandeja original', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+
+        const eliminado = gestor.eliminarCorreo(correo.getId());
+
+        expect(eliminado).toBe(true);
+        expect(gestor.consultarBandeja(TipoBandeja.ENTRADA).length).toBe(0);
+        expect(gestor.consultarBandeja(TipoBandeja.ELIMINADOS).map((c) => c.getId())).toContain(correo.getId());
+    });
+
+    test('Restaurar un correo eliminado lo devuelve a su bandeja de origen', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+        gestor.eliminarCorreo(correo.getId());
+
+        const restaurado = gestor.restaurarCorreo(correo.getId());
+
+        expect(restaurado).toBe(true);
+        expect(gestor.consultarBandeja(TipoBandeja.ELIMINADOS).length).toBe(0);
+        expect(gestor.consultarBandeja(TipoBandeja.ENTRADA).map((c) => c.getId())).toContain(correo.getId());
+    });
+
+    test('No se puede restaurar un correo que no está en Eliminados', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+
+        expect(gestor.restaurarCorreo(correo.getId())).toBe(false);
+    });
+
+    test('No se puede eliminar un correo que ya está en Eliminados', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+        gestor.eliminarCorreo(correo.getId());
+
+        expect(gestor.eliminarCorreo(correo.getId())).toBe(false);
+    });
 });
