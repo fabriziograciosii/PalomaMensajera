@@ -6,7 +6,7 @@ import type { ICorreoConsulta } from "../src/correos/ICorreoConsulta"
 import type { ICorreo } from "../src/correos/ICorreo"
 
 
-const ana = new Contacto("Ana Pérez", "ana@ucp.edu.ar")
+const marcos = new Contacto("Marcos Steve", "marcossteve@ucp.edu.ar")
 
 const jose = new Contacto("José Fernandez", "fernandezjose_cen@ucp.edu.ar")
 
@@ -14,14 +14,14 @@ const marta = new Contacto("Marta Díaz", "marta@ucp.edu.ar")
 
 describe("creación de un correo", () => {
     test("guarda el id, el asunto, el cuerpo, el remitente y los destinatarios", () => {
-        const correo = new Correo(1, "Examen final", "Se toma el lunes", ana, [jose])
+        const correo = new Correo(1, "Examen final", "Se toma el lunes", marcos, [jose])
 
         expect(correo.getId()).toBe(1)
         expect(correo.getAsunto()).toBe("Examen final")
 
         expect(correo.getCuerpo()).toBe("Se toma el lunes")
 
-        expect(correo.getRemitente()).toBe(ana)
+        expect(correo.getRemitente()).toBe(marcos)
         expect(correo.getDestinatarios().length).toBe(1)
         expect(correo.getDestinatarios()[0]).toBe(jose)
 
@@ -29,37 +29,37 @@ describe("creación de un correo", () => {
     })
 
         test("un correo se puede usar a través de ICorreoConsulta", () => {
-        const consulta: ICorreoConsulta = new Correo(1, "Hola", "Texto", ana, [jose])
+        const consulta: ICorreoConsulta = new Correo(1, "Hola", "Texto", marcos, [jose])
 
         expect(consulta.getId()).toBe(1)
         expect(consulta.getAsunto()).toBe("Hola")
         expect(consulta.getCuerpo()).toBe("Texto")
-        expect(consulta.getRemitente()).toBe(ana)
+        expect(consulta.getRemitente()).toBe(marcos)
         expect(consulta.estaLeido()).toBe(false)
         expect(consulta.esFavorito()).toBe(false)
     })
 
     test("un correo recién creado no está leído", () => {
-        expect(new Correo(1, "Hola", "Texto", ana, [jose]).estaLeido()).toBe(false)
+        expect(new Correo(1, "Hola", "Texto", marcos, [jose]).estaLeido()).toBe(false)
     })
 
     test("un correo recién creado no es favorito", () => {
-        expect(new Correo(1, "Hola", "Texto", ana, [jose]).esFavorito()).toBe(false)
+        expect(new Correo(1, "Hola", "Texto", marcos, [jose]).esFavorito()).toBe(false)
     })
 
     test("un correo puede tener varios destinatarios", () => {
-        const correo = new Correo(1, "Reunión", "Texto", ana, [jose, marta])
+        const correo = new Correo(1, "Reunión", "Texto", marcos, [jose, marta])
 
         expect(correo.getDestinatarios().length).toBe(2)
         expect(correo.getDestinatarios()[1]).toBe(marta)
     })
 
     test("se pueden crear varios correos con distintos remitentes y destinatarios", () => {
-        const primero = new Correo(1, "Primero", "A", ana, [jose])
+        const primero = new Correo(1, "Primero", "A", marcos, [jose])
 
-        const segundo = new Correo(2, "Segundo", "B", jose, [ana, marta])
+        const segundo = new Correo(2, "Segundo", "B", jose, [marcos, marta])
 
-        expect(primero.getRemitente()).toBe(ana)
+        expect(primero.getRemitente()).toBe(marcos)
 
         expect(segundo.getRemitente()).toBe(jose)
 
@@ -69,9 +69,9 @@ describe("creación de un correo", () => {
     })
 
     test("cada correo conserva su propia identidad", () => {
-        const primero = new Correo(1, "Hola", "Texto", ana, [jose])
+        const primero = new Correo(1, "Hola", "Texto", marcos, [jose])
 
-        const segundo = new Correo(2, "Hola", "Texto", ana, [jose])
+        const segundo = new Correo(2, "Hola", "Texto", marcos, [jose])
 
         expect(primero.getId()).not.toBe(segundo.getId())
     })
@@ -80,7 +80,7 @@ describe("creación de un correo", () => {
 describe("proteccion de los destinatarios", () => {
     test("modificar la lista original no cambia los destinatarios del correo", () => {
         const lista = [jose]
-        const correo = new Correo(1, "Hola", "Texto", ana, lista)
+        const correo = new Correo(1, "Hola", "Texto", marcos, lista)
 
         lista.push(marta)
 
@@ -88,7 +88,7 @@ describe("proteccion de los destinatarios", () => {
     })
 
     test("getDestinatarios devuelve una copia, no la lista interna", () => {
-        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+        const correo = new Correo(1, "Hola", "Texto", marcos, [jose])
 
         const primera = correo.getDestinatarios()
         const segunda = correo.getDestinatarios()
@@ -101,15 +101,15 @@ describe("proteccion de los destinatarios", () => {
 describe("correos y agenda de contactos", () => {
     test("eliminar un contacto de la agenda no elimina ni cambia los correos que lo referencian", () => {
         const agenda = new Agenda()
-        agenda.agregar(ana)
+        agenda.agregar(marcos)
         agenda.agregar(jose)
-        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+        const correo = new Correo(1, "Hola", "Texto", marcos, [jose])
 
-        agenda.eliminar("ana@ucp.edu.ar")
+        agenda.eliminar("marcossteve@ucp.edu.ar")
         agenda.eliminar("fernandezjose_cen@ucp.edu.ar")
 
         expect(agenda.getCantidad()).toBe(0)
-        expect(correo.getRemitente()).toBe(ana)
+        expect(correo.getRemitente()).toBe(marcos)
         expect(correo.getDestinatarios()[0]).toBe(jose)
         expect(correo.getAsunto()).toBe("Hola")
     })
@@ -118,34 +118,34 @@ describe("correos y agenda de contactos", () => {
 describe("validez de un correo completo", () => {
     test("un correo con todos los datos es válido", () => {
 
-        expect(new Correo(1, "Hola", "Texto", ana, [jose]).esValido()).toBe(true)
+        expect(new Correo(1, "Hola", "Texto", marcos, [jose]).esValido()).toBe(true)
 
     })
 
     test("un correo con cuerpo vacío es válido", () => {
-        expect(new Correo(1, "Hola", "", ana, [jose]).esValido()).toBe(true)
+        expect(new Correo(1, "Hola", "", marcos, [jose]).esValido()).toBe(true)
 
     })
 
     test("un correo con asunto vacío no es válido", () => {
 
-        expect(new Correo(1, "", "Texto", ana, [jose]).esValido()).toBe(false)
+        expect(new Correo(1, "", "Texto", marcos, [jose]).esValido()).toBe(false)
 
     })
 
     test("un correo con asunto de solo espacios no es válido", () => {
 
-        expect(new Correo(1, "   ", "Texto", ana, [jose]).esValido()).toBe(false)
+        expect(new Correo(1, "   ", "Texto", marcos, [jose]).esValido()).toBe(false)
     })
 
     test("un correo sin destinatarios no es válido", () => {
 
-        expect(new Correo(1, "Hola", "Texto", ana, []).esValido()).toBe(false)
+        expect(new Correo(1, "Hola", "Texto", marcos, []).esValido()).toBe(false)
     })
 
     test("un correo con un remitente inválido no es válido", () => {
 
-        const invalido = new Contacto("Ana", "sin-arroba")
+        const invalido = new Contacto("Marcos", "sin-arroba")
 
         expect(new Correo(1, "Hola", "Texto", invalido, [jose]).esValido()).toBe(false)
     })
@@ -154,39 +154,39 @@ describe("validez de un correo completo", () => {
 
         const invalido = new Contacto("Luis", "sin-arroba")
 
-        expect(new Correo(1, "Hola", "Texto", ana, [jose, invalido]).esValido()).toBe(false)
+        expect(new Correo(1, "Hola", "Texto", marcos, [jose, invalido]).esValido()).toBe(false)
     })
 })
 
 describe("validez del id", () => {
     test("un id igual a 0 no es válido", () => {
 
-        expect(new Correo(0, "Hola", "Texto", ana, [jose]).esValido()).toBe(false)
+        expect(new Correo(0, "Hola", "Texto", marcos, [jose]).esValido()).toBe(false)
 
     })
 
     test("un id negativo no es válido", () => {
 
-        expect(new Correo(-3, "Hola", "Texto", ana, [jose]).esValido()).toBe(false)
+        expect(new Correo(-3, "Hola", "Texto", marcos, [jose]).esValido()).toBe(false)
 
     })
 
     test("un id decimal no es válido", () => {
-        expect(new Correo(1.5, "Hola", "Texto", ana, [jose]).esValido()).toBe(false)
+        expect(new Correo(1.5, "Hola", "Texto", marcos, [jose]).esValido()).toBe(false)
 
     })
 
     test("un id que no es un número no es válido", () => {
 
 
-        expect(new Correo(NaN, "Hola", "Texto", ana, [jose]).esValido()).toBe(false)
+        expect(new Correo(NaN, "Hola", "Texto", marcos, [jose]).esValido()).toBe(false)
     })
 })
 
 describe("validez como borrador", () => {
     test("un borrador sin asunto ni destinatarios es válido como borrador", () => {
 
-        const borrador = new Correo(1, "", "", ana, [])
+        const borrador = new Correo(1, "", "", marcos, [])
 
         expect(borrador.esBorradorValido()).toBe(true)
 
@@ -195,7 +195,7 @@ describe("validez como borrador", () => {
 
     test("un borrador con id inválido no es válido como borrador", () => {
 
-        expect(new Correo(0, "", "", ana, []).esBorradorValido()).toBe(false)
+        expect(new Correo(0, "", "", marcos, []).esBorradorValido()).toBe(false)
     })
 
     test("un borrador con un destinatario inválido no es válido como borrador", () => {
@@ -203,19 +203,19 @@ describe("validez como borrador", () => {
         const invalido = new Contacto("Luis", "sin-arroba")
 
 
-        expect(new Correo(1, "", "", ana, [invalido]).esBorradorValido()).toBe(false)
+        expect(new Correo(1, "", "", marcos, [invalido]).esBorradorValido()).toBe(false)
     })
 
     test("un borrador con un remitente inválido no es válido como borrador", () => {
 
-        const invalido = new Contacto("Ana", "sin-arroba")
+        const invalido = new Contacto("Marcos", "sin-arroba")
 
         expect(new Correo(1, "", "", invalido, []).esBorradorValido()).toBe(false)
     })
 
     test("un correo completo también es válido como borrador", () => {
 
-        expect(new Correo(1, "Hola", "Texto", ana, [jose]).esBorradorValido()).toBe(true)
+        expect(new Correo(1, "Hola", "Texto", marcos, [jose]).esBorradorValido()).toBe(true)
     })
 
 
@@ -225,7 +225,7 @@ describe("modificar un correo", () => {
 
     test("setAsunto cambia el asunto", () => {
 
-        const correo = new Correo(1, "Viejo", "Texto", ana, [jose])
+        const correo = new Correo(1, "Viejo", "Texto", marcos, [jose])
 
         correo.setAsunto("Nuevo")
 
@@ -235,7 +235,7 @@ describe("modificar un correo", () => {
 
     test("setCuerpo cambia el cuerpo", () => {
 
-        const correo = new Correo(1, "Hola", "Viejo", ana, [jose])
+        const correo = new Correo(1, "Hola", "Viejo", marcos, [jose])
 
         correo.setCuerpo("Nuevo")
 
@@ -244,7 +244,7 @@ describe("modificar un correo", () => {
 
     test("setDestinatarios cambia los destinatarios si todos son válidos", () => {
 
-        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+        const correo = new Correo(1, "Hola", "Texto", marcos, [jose])
 
         expect(correo.setDestinatarios([jose, marta])).toBe(true)
 
@@ -253,7 +253,7 @@ describe("modificar un correo", () => {
 
     test("setDestinatarios con un contacto inválido devuelve false y conserva los anteriores", () => {
 
-        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+        const correo = new Correo(1, "Hola", "Texto", marcos, [jose])
 
         const invalido = new Contacto("Marta", "sin-arroba")
 
@@ -265,7 +265,7 @@ describe("modificar un correo", () => {
 
     test("modificar la lista que se pasó a setDestinatarios no cambia los destinatarios", () => {
 
-        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+        const correo = new Correo(1, "Hola", "Texto", marcos, [jose])
 
         const lista = [marta]
 
@@ -277,7 +277,7 @@ describe("modificar un correo", () => {
 
     test("los cambios no modifican el id ni el remitente", () => {
 
-        const correo = new Correo(7, "Viejo", "Texto", ana, [jose])
+        const correo = new Correo(7, "Viejo", "Texto", marcos, [jose])
 
         correo.setAsunto("Nuevo")
         correo.setCuerpo("Otro")
@@ -286,12 +286,12 @@ describe("modificar un correo", () => {
 
         expect(correo.getId()).toBe(7)
 
-        expect(correo.getRemitente()).toBe(ana)
+        expect(correo.getRemitente()).toBe(marcos)
     })
 
     test("un borrador incompleto se puede completar hasta que sea válido para enviar", () => {
 
-        const correo = new Correo(1, "", "", ana, [])
+        const correo = new Correo(1, "", "", marcos, [])
 
         expect(correo.esValido()).toBe(false)
 
@@ -302,7 +302,7 @@ describe("modificar un correo", () => {
     })
 
     test("un correo se puede usar a través de ICorreo", () => {
-        const correo: ICorreo = new Correo(1, "Viejo", "Texto", ana, [jose])
+        const correo: ICorreo = new Correo(1, "Viejo", "Texto", marcos, [jose])
 
         correo.setAsunto("Nuevo")
 
