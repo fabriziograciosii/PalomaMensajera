@@ -310,7 +310,7 @@ describe("modificar un correo", () => {
     })
 
         test("marcarLeido cambia el estado a leído", () => {
-       const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+       const correo = new Correo(1, "Hola", "Texto", marcos, [jose])
 
         correo.marcarLeido()
 
@@ -318,7 +318,7 @@ describe("modificar un correo", () => {
     })
 
     test("marcarNoLeido vuelve a dejar el correo como no leído", () => {
-        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+        const correo = new Correo(1, "Hola", "Texto", marcos, [jose])
 
         correo.marcarLeido()
         correo.marcarNoLeido()
@@ -327,7 +327,7 @@ describe("modificar un correo", () => {
     })
 
     test("el estado de lectura se mantiene al consultar el correo", () => {
-        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+        const correo = new Correo(1, "Hola", "Texto", marcos, [jose])
 
         correo.marcarLeido()
 
@@ -336,7 +336,7 @@ describe("modificar un correo", () => {
     })
 
     test("marcar favorito cambia el estado a favorito", () => {
-        const correo = new Correo(1, "hola", "texto", ana, [jose])
+        const correo = new Correo(1, "hola", "texto", marcos, [jose])
 
         correo.marcarFavorito()
 
@@ -344,7 +344,7 @@ describe("modificar un correo", () => {
     })
 
     test("marcar favorito no cambia el estado de lectura", () => {
-        const correo = new Correo(1, "hola", "texto", ana, [jose])
+        const correo = new Correo(1, "hola", "texto", marcos, [jose])
 
         correo.marcarFavorito()
 
