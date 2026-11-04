@@ -102,10 +102,46 @@ export class GestorCorreos implements IGestorCorreos {
     }
 
     consultarNoLeidos(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
-        
         const correosDeLaBandeja = this._bandejas[tipo].obtenerCorreos();
 
         return correosDeLaBandeja.filter((correo) => !correo.estaLeido());
+    }
+
+    enviarCorreo(
+        remitente: IContactoConsulta,
+        asunto: string,
+        cuerpo: string,
+        destinatarios: ReadonlyArray<IContactoConsulta>
+    ): ICorreoConsulta | undefined {
+        const correo = new Correo(this.generarId(), asunto, cuerpo, remitente, [...destinatarios]);
+        const puedeEnviarse = correo.esValido();
+
+        puedeEnviarse ? this.registrarCorreo(correo, TipoBandeja.ENVIADOS) : null;
+
+        return puedeEnviarse ? correo : undefined;
+    }
+
+    marcarFavorito(id: number): boolean {
+        const correo = this._correosPorId.get(id);
+
+        correo !== undefined ? correo.marcarFavorito() : null;
+
+        return correo !== undefined;
+    }
+
+    desmarcarFavorito(id: number): boolean {
+        const correo = this._correosPorId.get(id);
+
+        correo !== undefined ? correo.desmarcarFavorito() : null;
+
+        return correo !== undefined;
+    }
+
+    consultarFavoritos(): ReadonlyArray<ICorreoConsulta> {
+        return Object.values(TipoBandeja)
+            .filter(tipo => tipo !== TipoBandeja.ELIMINADOS)
+            .flatMap(tipo => this._bandejas[tipo].obtenerCorreos())
+            .filter(correo => correo.esFavorito());
     }
 
     consultarBandeja(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {

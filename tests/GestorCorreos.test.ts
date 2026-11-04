@@ -245,4 +245,127 @@ describe('GestorCorreos, estado de lectura', () => {
     
     });
 
+    describe('GestorCorreos - Envío directo (RF-02)', () => {
+    const remitente = new Contacto('Gonza Rodriguez', 'gonza@ucp.edu.ar');
+    const destinatario = new Contacto('Fabri Graciosi', 'fabri@ucp.edu.ar');
+
+    test('enviarCorreo con remitente, asunto y destinatarios válidos queda en Enviados', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
+
+        expect(correo).not.toBeUndefined();
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).map((c) => c.getId())).toContain(correo!.getId());
+    });
+
+    test('enviarCorreo admite varios destinatarios', () => {
+        const gestor = new GestorCorreos();
+        const otroDestinatario = new Contacto('Marta Fort', 'marta@ucp.edu.ar');
+        const correo = gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario, otroDestinatario]);
+
+        expect(correo!.getDestinatarios().length).toBe(2);
+    });
+
+    test('enviarCorreo sin destinatarios no se envía', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.enviarCorreo(remitente, 'Aviso', 'Hola', []);
+
+        expect(correo).toBeUndefined();
+    });
+
+    test('enviarCorreo con asunto vacío no se envía', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.enviarCorreo(remitente, '', 'Hola', [destinatario]);
+
+        expect(correo).toBeUndefined();
+    });
+
+    test('un correo enviado desde un borrador sale de Borradores', () => {
+        const gestor = new GestorCorreos();
+        const borrador = gestor.crearBorrador(remitente, 'Examen', 'Trae tu DNI', [destinatario]);
+
+        gestor.enviarBorrador(borrador.getId());
+
+        expect(gestor.consultarBandeja(TipoBandeja.BORRADORES).length).toBe(0);
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).map((c) => c.getId())).toContain(borrador.getId());
+    });
+
+    test('enviarCorreo no genera registros duplicados', () => {
+        const gestor = new GestorCorreos();
+        gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
+
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).length).toBe(1);
+    });
+});
+
+describe('GestorCorreos - Favoritos (RF-09)', () => {
+    const remitente = new Contacto('Ignacio Cremona', 'cremona@ucp.edu.ar');
+    const destinatario = new Contacto('Rodrigo De Paul', 'rdp@ucp.edu.ar');
+
+    test('marcarFavorito devuelve true y marca el correo como favorito', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+
+        expect(gestor.marcarFavorito(correo.getId())).toBe(true);
+        expect(correo.esFavorito()).toBe(true);
+    });
+
+    test('marcarFavorito sobre un id inexistente devuelve false', () => {
+        const gestor = new GestorCorreos();
+
+        expect(gestor.marcarFavorito(999)).toBe(false);
+    });
+
+    test('desmarcarFavorito quita el correo de la vista de favoritos', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+        gestor.marcarFavorito(correo.getId());
+
+        expect(gestor.desmarcarFavorito(correo.getId())).toBe(true);
+        expect(gestor.consultarFavoritos().map((c) => c.getId())).not.toContain(correo.getId());
+    });
+
+    test('marcar favorito no mueve el correo de su bandeja', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+
+        gestor.marcarFavorito(correo.getId());
+
+        expect(gestor.consultarBandeja(TipoBandeja.ENTRADA).map((c) => c.getId())).toContain(correo.getId());
+    });
+
+    test('consultarFavoritos devuelve solo los correos marcados, sin duplicados', () => {
+        const gestor = new GestorCorreos();
+        const correo1 = gestor.enviarCorreo(remitente, 'Uno', 'Hola', [destinatario])!;
+        const correo2 = gestor.enviarCorreo(remitente, 'Dos', 'Hola', [destinatario])!;
+        gestor.marcarFavorito(correo1.getId());
+
+        const favoritos = gestor.consultarFavoritos();
+
+        expect(favoritos.map((c) => c.getId())).toContain(correo1.getId());
+        expect(favoritos.map((c) => c.getId())).not.toContain(correo2.getId());
+    });
+
+    test('un correo favorito eliminado no aparece en favoritos pero conserva el indicador', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+        gestor.marcarFavorito(correo.getId());
+
+        gestor.eliminarCorreo(correo.getId());
+
+        expect(gestor.consultarFavoritos().map((c) => c.getId())).not.toContain(correo.getId());
+        expect(correo.esFavorito()).toBe(true);
+    });
+
+    test('al restaurar un correo eliminado-favorito, vuelve a aparecer en favoritos', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+        gestor.marcarFavorito(correo.getId());
+        gestor.eliminarCorreo(correo.getId());
+
+        gestor.restaurarCorreo(correo.getId());
+
+        expect(gestor.consultarFavoritos().map((c) => c.getId())).toContain(correo.getId());
+    });
+});
+
 });
