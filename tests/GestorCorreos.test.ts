@@ -245,4 +245,56 @@ describe('GestorCorreos, estado de lectura', () => {
     
     });
 
+    describe('GestorCorreos - Envío directo (RF-02)', () => {
+    const remitente = new Contacto('Gonza Rodriguez', 'gonza@ucp.edu.ar');
+    const destinatario = new Contacto('Fabri Graciosi', 'fabri@ucp.edu.ar');
+
+    test('enviarCorreo con remitente, asunto y destinatarios válidos queda en Enviados', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
+
+        expect(correo).not.toBeUndefined();
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).map((c) => c.getId())).toContain(correo!.getId());
+    });
+
+    test('enviarCorreo admite varios destinatarios', () => {
+        const gestor = new GestorCorreos();
+        const otroDestinatario = new Contacto('Marta Fort', 'marta@ucp.edu.ar');
+        const correo = gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario, otroDestinatario]);
+
+        expect(correo!.getDestinatarios().length).toBe(2);
+    });
+
+    test('enviarCorreo sin destinatarios no se envía', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.enviarCorreo(remitente, 'Aviso', 'Hola', []);
+
+        expect(correo).toBeUndefined();
+    });
+
+    test('enviarCorreo con asunto vacío no se envía', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.enviarCorreo(remitente, '', 'Hola', [destinatario]);
+
+        expect(correo).toBeUndefined();
+    });
+
+    test('un correo enviado desde un borrador sale de Borradores', () => {
+        const gestor = new GestorCorreos();
+        const borrador = gestor.crearBorrador(remitente, 'Examen', 'Trae tu DNI', [destinatario]);
+
+        gestor.enviarBorrador(borrador.getId());
+
+        expect(gestor.consultarBandeja(TipoBandeja.BORRADORES).length).toBe(0);
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).map((c) => c.getId())).toContain(borrador.getId());
+    });
+
+    test('enviarCorreo no genera registros duplicados', () => {
+        const gestor = new GestorCorreos();
+        gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
+
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).length).toBe(1);
+    });
+});
+
 });
