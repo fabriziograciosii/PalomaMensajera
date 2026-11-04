@@ -103,4 +103,13 @@ export class Correo implements ICorreo {
     }
 
 
+    marcarLeido(): void {
+        this._leido = true
+    }
+
+    marcarNoLeido(): void {
+        this._leido = false
+    }
+
+
 }
