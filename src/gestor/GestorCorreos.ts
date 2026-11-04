@@ -101,6 +101,13 @@ export class GestorCorreos implements IGestorCorreos {
         return correo !== undefined;
     }
 
+    consultarNoLeidos(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
+        
+        const correosDeLaBandeja = this._bandejas[tipo].obtenerCorreos();
+
+        return correosDeLaBandeja.filter((correo) => !correo.estaLeido());
+    }
+
     consultarBandeja(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
         return this._bandejas[tipo].obtenerCorreos();
     }

@@ -32,4 +32,5 @@ export interface IGestorCorreos {
     consultarBandeja(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
     marcarLeido(id: number): boolean;
     marcarNoLeido(id: number): boolean;
+    consultarNoLeidos(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
 }
