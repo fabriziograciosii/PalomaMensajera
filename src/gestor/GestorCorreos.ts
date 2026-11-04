@@ -85,6 +85,22 @@ export class GestorCorreos implements IGestorCorreos {
         return puedeRestaurarse;
     }
 
+    marcarLeido(id: number): boolean {
+        const correo = this._correosPorId.get(id);
+
+        correo !== undefined ? correo.marcarLeido() : null;
+
+        return correo !== undefined;
+    }
+
+    marcarNoLeido(id: number): boolean {
+        const correo = this._correosPorId.get(id);
+
+        correo !== undefined ? correo.marcarNoLeido() : null;
+
+        return correo !== undefined;
+    }
+
     consultarBandeja(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
         return this._bandejas[tipo].obtenerCorreos();
     }
