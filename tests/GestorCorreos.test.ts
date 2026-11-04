@@ -151,6 +151,22 @@ describe('GestorCorreos - Bandejas y clasificación (RF-06)', () => {
         const gestor = new GestorCorreos();
         expect(gestor.eliminarCorreo(999)).toBe(false);
     });
+
+        test('tres correos distintos quedan clasificados cada uno en su bandeja correspondiente (a pedido del profe en clase)', () => {
+        const gestor = new GestorCorreos();
+
+        const recibido = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+        const enviado = gestor.enviarCorreo(remitente, 'Reunión', 'Hola', [destinatario])!;
+        const borrador = gestor.crearBorrador(remitente, 'Pendiente', 'Texto', [destinatario]);
+
+        expect(gestor.consultarBandeja(TipoBandeja.ENTRADA).map((c) => c.getId())).toContain(recibido.getId());
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).map((c) => c.getId())).toContain(enviado.getId());
+        expect(gestor.consultarBandeja(TipoBandeja.BORRADORES).map((c) => c.getId())).toContain(borrador.getId());
+
+        expect(gestor.consultarBandeja(TipoBandeja.ENTRADA).map((c) => c.getId())).not.toContain(enviado.getId());
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).map((c) => c.getId())).not.toContain(recibido.getId());
+        expect(gestor.consultarBandeja(TipoBandeja.BORRADORES).map((c) => c.getId())).not.toContain(recibido.getId());
+    });
 });
 
 
