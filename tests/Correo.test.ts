@@ -308,5 +308,48 @@ describe("modificar un correo", () => {
 
         expect(correo.getAsunto()).toBe("Nuevo")
     })
+
+        test("marcarLeido cambia el estado a leído", () => {
+       const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+
+        correo.marcarLeido()
+
+        expect(correo.estaLeido()).toBe(true)
+    })
+
+    test("marcarNoLeido vuelve a dejar el correo como no leído", () => {
+        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+
+        correo.marcarLeido()
+        correo.marcarNoLeido()
+
+        expect(correo.estaLeido()).toBe(false)
+    })
+
+    test("el estado de lectura se mantiene al consultar el correo", () => {
+        const correo = new Correo(1, "Hola", "Texto", ana, [jose])
+
+        correo.marcarLeido()
+
+        expect(correo.estaLeido()).toBe(true)
+        expect(correo.estaLeido()).toBe(true)
+    })
+
+    test("marcar favorito cambia el estado a favorito", () => {
+        const correo = new Correo(1, "hola", "texto", ana, [jose])
+
+        correo.marcarFavorito()
+
+        expect(correo.esFavorito()).toBe(true)
+    })
+
+    test("marcar favorito no cambia el estado de lectura", () => {
+        const correo = new Correo(1, "hola", "texto", ana, [jose])
+
+        correo.marcarFavorito()
+
+        expect(correo.estaLeido()).toBe(false)
+
+    })
     
 })
