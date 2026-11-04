@@ -334,5 +334,22 @@ describe("modificar un correo", () => {
         expect(correo.estaLeido()).toBe(true)
         expect(correo.estaLeido()).toBe(true)
     })
+
+    test("marcar favorito cambia el estado a favorito", () => {
+        const correo = new Correo(1, "hola", "texto", ana, [jose])
+
+        correo.marcarFavorito()
+
+        expect(correo.esFavorito()).toBe(true)
+    })
+
+    test("marcar favorito no cambia el estado de lectura", () => {
+        const correo = new Correo(1, "hola", "texto", ana, [jose])
+
+        correo.marcarFavorito()
+
+        expect(correo.estaLeido()).toBe(false)
+
+    })
     
 })
