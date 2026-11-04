@@ -33,4 +33,9 @@ export interface IGestorCorreos {
     marcarLeido(id: number): boolean;
     marcarNoLeido(id: number): boolean;
     consultarNoLeidos(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
+    enviarCorreo( remitente: IContactoConsulta, asunto: string, cuerpo: string, destinatarios: ReadonlyArray<IContactoConsulta>): ICorreoConsulta | undefined
+
+    marcarFavorito(id:number): boolean
+    desmarcarFavorito(id:number): boolean
+    consultarFavoritos(): ReadonlyArray<ICorreoConsulta>
 }
