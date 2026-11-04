@@ -30,4 +30,7 @@ export interface IGestorCorreos {
     eliminarCorreo(id: number): boolean;
     restaurarCorreo(id: number): boolean;
     consultarBandeja(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
+    marcarLeido(id: number): boolean;
+    marcarNoLeido(id: number): boolean;
+    consultarNoLeidos(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
 }

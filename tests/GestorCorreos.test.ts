@@ -152,3 +152,97 @@ describe('GestorCorreos - Bandejas y clasificación (RF-06)', () => {
         expect(gestor.eliminarCorreo(999)).toBe(false);
     });
 });
+
+
+
+describe('GestorCorreos, estado de lectura', () => {
+    const remitente = new Contacto('Luis Rodriguez', 'luisrod@ucp.edu.ar');
+    const destinatario = new Contacto('Luis Gómez', 'luis@ucp.edu.ar');
+
+    test('marcar un correo como leído devuelve verdadero y lo deja leído', () => {
+        
+        const gestor = new GestorCorreos();
+        
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+
+        const resultado = gestor.marcarLeido(correo.getId());
+
+        expect(resultado).toBe(true);
+        
+        expect(gestor.consultarBandeja(TipoBandeja.ENTRADA)[0].estaLeido()).toBe(true);
+    });
+
+    test('un correo leído se puede marcar nuevamente como no leído', () => {
+        
+        const gestor = new GestorCorreos();
+        
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+
+        gestor.marcarLeido(correo.getId());
+        
+        const resultado = gestor.marcarNoLeido(correo.getId());
+
+        expect(resultado).toBe(true);
+        
+        expect(gestor.consultarBandeja(TipoBandeja.ENTRADA)[0].estaLeido()).toBe(false);
+    });
+
+    test('marcar leído un correo que no existe devuelve false', () => {
+        
+        const gestor = new GestorCorreos();
+
+        expect(gestor.marcarLeido(999)).toBe(false);
+       
+        expect(gestor.marcarNoLeido(999)).toBe(false);
+    });
+
+    
+    
+    test('consultar no leidos devuelve solo los correos no leídos de la bandeja', () => {
+        
+        const gestor = new GestorCorreos();
+        
+        const primero = gestor.recibirCorreo(remitente, 'Uno', 'Hola', [destinatario])!;
+        
+        const segundo = gestor.recibirCorreo(remitente, 'Dos', 'Hola', [destinatario])!;
+
+        gestor.marcarLeido(primero.getId());
+
+        const noLeidos = gestor.consultarNoLeidos(TipoBandeja.ENTRADA);
+
+        expect(noLeidos.length).toBe(1);
+        expect(noLeidos[0].getId()).toBe(segundo.getId());
+    });
+
+
+    test('el cambio de estado se refleja inmediatamente en consultar no leídos', () => {
+        const gestor = new GestorCorreos();
+
+        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+
+        gestor.marcarLeido(correo.getId());
+        
+        expect(gestor.consultarNoLeidos(TipoBandeja.ENTRADA).length).toBe(0);
+
+        gestor.marcarNoLeido(correo.getId());
+        
+        expect(gestor.consultarNoLeidos(TipoBandeja.ENTRADA).length).toBe(1);
+    });
+
+    test('consultar no leídos solo mira la bandeja pedida', () => {
+        
+        const gestor = new GestorCorreos();
+
+        gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
+        
+        gestor.crearBorrador(remitente, 'Borrador', 'Texto', [destinatario]);
+
+        expect(gestor.consultarNoLeidos(TipoBandeja.ENTRADA).length).toBe(1);
+        
+        expect(gestor.consultarNoLeidos(TipoBandeja.BORRADORES).length).toBe(1);
+
+        expect(gestor.consultarNoLeidos(TipoBandeja.ENVIADOS).length).toBe(0);
+    
+    });
+
+});
