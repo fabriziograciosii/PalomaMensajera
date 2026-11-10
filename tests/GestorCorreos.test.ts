@@ -246,12 +246,30 @@ describe('GestorCorreos - Envío directo (RF-02)', () => {
         expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).map((c) => c.getId())).toContain(correo!.getId());
     });
 
-    test('enviarCorreo admite varios destinatarios', () => {
+        test('enviarCorreo admite varios destinatarios, y eliminar uno no afecta a los demás correos', () => {
         const gestor = new GestorCorreos();
-        const otroDestinatario = new Contacto('Marta Fort', 'marta@ucp.edu.ar');
-        const correo = gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario, otroDestinatario]);
+        const destinatario2 = new Contacto('Marta Fort', 'marta@ucp.edu.ar');
+        const destinatario3 = new Contacto('Jose Luis', 'jose@ucp.edu.ar');
 
-        expect(correo!.getDestinatarios().length).toBe(2);
+        const correoATresPersonas = gestor.enviarCorreo(remitente, 'Reunión general', 'Hola a todos', [
+            destinatario,
+            destinatario2,
+            destinatario3,
+        ])!;
+        const otroCorreo1 = gestor.enviarCorreo(remitente, 'Aviso 1', 'Texto', [destinatario])!;
+        const otroCorreo2 = gestor.enviarCorreo(remitente, 'Aviso 2', 'Texto', [destinatario])!;
+
+        expect(correoATresPersonas.getDestinatarios().length).toBe(3);
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).length).toBe(3);
+
+        const eliminado = gestor.eliminarCorreo(correoATresPersonas.getId());
+
+        expect(eliminado).toBe(true);
+        expect(gestor.consultarBandeja(TipoBandeja.ELIMINADOS).map((c) => c.getId())).toEqual([correoATresPersonas.getId()]);
+        expect(gestor.consultarBandeja(TipoBandeja.ENVIADOS).map((c) => c.getId())).toEqual([
+            otroCorreo1.getId(),
+            otroCorreo2.getId(),
+        ]);
     });
 
     test('enviarCorreo sin destinatarios no se envía', () => {
