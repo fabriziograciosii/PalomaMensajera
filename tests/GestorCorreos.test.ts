@@ -9,7 +9,6 @@ describe('GestorCorreos - Borradores (RF-07)', () => {
 
     test('Crear un borrador lo registra en la bandeja de Borradores', () => {
         const gestor = new GestorCorreos();
-
         const borrador = gestor.crearBorrador(remitente, 'Examen', 'Trae tu DNI', [destinatario]);
 
         expect(gestor.consultarBandeja(TipoBandeja.BORRADORES).map((c) => c.getId())).toContain(borrador.getId());
@@ -17,7 +16,6 @@ describe('GestorCorreos - Borradores (RF-07)', () => {
 
     test('Un borrador puede crearse incompleto, sin todos los datos obligatorios', () => {
         const gestor = new GestorCorreos();
-
         const borrador = gestor.crearBorrador(remitente);
 
         expect(borrador.getAsunto()).toBe('');
@@ -43,7 +41,7 @@ describe('GestorCorreos - Borradores (RF-07)', () => {
         expect(gestor.editarBorrador(recibido!.getId(), { asunto: 'Otro' })).toBe(false);
     });
 
-        test('Enviar un borrador válido lo traslada a la Bandeja de Enviados', () => {
+    test('Enviar un borrador válido lo traslada a la Bandeja de Enviados', () => {
         const gestor = new GestorCorreos();
         const borrador = gestor.crearBorrador(remitente, 'Examen', 'Trae tu DNI', [destinatario]);
 
@@ -71,7 +69,6 @@ describe('GestorCorreos - Bandejas y clasificación (RF-06)', () => {
 
     test('Un correo recibido queda en la Bandeja de Entrada', () => {
         const gestor = new GestorCorreos();
-
         const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
 
         expect(correo).not.toBeUndefined();
@@ -86,7 +83,7 @@ describe('GestorCorreos - Bandejas y clasificación (RF-06)', () => {
         expect(gestor.consultarBandeja(TipoBandeja.ENTRADA).length).toBe(0);
     });
 
-        test('Eliminar un correo lo traslada a Eliminados y lo saca de su bandeja original', () => {
+    test('Eliminar un correo lo traslada a Eliminados y lo saca de su bandeja original', () => {
         const gestor = new GestorCorreos();
         const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
 
@@ -124,7 +121,7 @@ describe('GestorCorreos - Bandejas y clasificación (RF-06)', () => {
         expect(gestor.eliminarCorreo(correo.getId())).toBe(false);
     });
 
-        test('Un correo pertenece a una única bandeja a la vez: enviar lo saca de Borradores', () => {
+    test('Un correo pertenece a una única bandeja a la vez: enviar lo saca de Borradores', () => {
         const gestor = new GestorCorreos();
         const borrador = gestor.crearBorrador(remitente, 'Examen', 'Trae tu DNI', [destinatario]);
 
@@ -152,7 +149,7 @@ describe('GestorCorreos - Bandejas y clasificación (RF-06)', () => {
         expect(gestor.eliminarCorreo(999)).toBe(false);
     });
 
-        test('tres correos distintos quedan clasificados cada uno en su bandeja correspondiente (a pedido del profe en clase)', () => {
+    test('tres correos distintos quedan clasificados cada uno en su bandeja correspondiente (a pedido del profe en clase)', () => {
         const gestor = new GestorCorreos();
 
         const recibido = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
@@ -169,57 +166,41 @@ describe('GestorCorreos - Bandejas y clasificación (RF-06)', () => {
     });
 });
 
-
-
 describe('GestorCorreos, estado de lectura', () => {
     const remitente = new Contacto('Luis Rodriguez', 'luisrod@ucp.edu.ar');
     const destinatario = new Contacto('Luis Gómez', 'luis@ucp.edu.ar');
 
     test('marcar un correo como leído devuelve verdadero y lo deja leído', () => {
-        
         const gestor = new GestorCorreos();
-        
         const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
 
         const resultado = gestor.marcarLeido(correo.getId());
 
         expect(resultado).toBe(true);
-        
         expect(gestor.consultarBandeja(TipoBandeja.ENTRADA)[0].estaLeido()).toBe(true);
     });
 
     test('un correo leído se puede marcar nuevamente como no leído', () => {
-        
         const gestor = new GestorCorreos();
-        
         const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
 
         gestor.marcarLeido(correo.getId());
-        
         const resultado = gestor.marcarNoLeido(correo.getId());
 
         expect(resultado).toBe(true);
-        
         expect(gestor.consultarBandeja(TipoBandeja.ENTRADA)[0].estaLeido()).toBe(false);
     });
 
     test('marcar leído un correo que no existe devuelve false', () => {
-        
         const gestor = new GestorCorreos();
 
         expect(gestor.marcarLeido(999)).toBe(false);
-       
         expect(gestor.marcarNoLeido(999)).toBe(false);
     });
 
-    
-    
     test('consultar no leidos devuelve solo los correos no leídos de la bandeja', () => {
-        
         const gestor = new GestorCorreos();
-        
         const primero = gestor.recibirCorreo(remitente, 'Uno', 'Hola', [destinatario])!;
-        
         const segundo = gestor.recibirCorreo(remitente, 'Dos', 'Hola', [destinatario])!;
 
         gestor.marcarLeido(primero.getId());
@@ -230,38 +211,30 @@ describe('GestorCorreos, estado de lectura', () => {
         expect(noLeidos[0].getId()).toBe(segundo.getId());
     });
 
-
     test('el cambio de estado se refleja inmediatamente en consultar no leídos', () => {
         const gestor = new GestorCorreos();
-
         const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
 
         gestor.marcarLeido(correo.getId());
-        
         expect(gestor.consultarNoLeidos(TipoBandeja.ENTRADA).length).toBe(0);
 
         gestor.marcarNoLeido(correo.getId());
-        
         expect(gestor.consultarNoLeidos(TipoBandeja.ENTRADA).length).toBe(1);
     });
 
     test('consultar no leídos solo mira la bandeja pedida', () => {
-        
         const gestor = new GestorCorreos();
 
         gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
-        
         gestor.crearBorrador(remitente, 'Borrador', 'Texto', [destinatario]);
 
         expect(gestor.consultarNoLeidos(TipoBandeja.ENTRADA).length).toBe(1);
-        
         expect(gestor.consultarNoLeidos(TipoBandeja.BORRADORES).length).toBe(1);
-
         expect(gestor.consultarNoLeidos(TipoBandeja.ENVIADOS).length).toBe(0);
-    
     });
+});
 
-    describe('GestorCorreos - Envío directo (RF-02)', () => {
+describe('GestorCorreos - Envío directo (RF-02)', () => {
     const remitente = new Contacto('Gonza Rodriguez', 'gonza@ucp.edu.ar');
     const destinatario = new Contacto('Fabri Graciosi', 'fabri@ucp.edu.ar');
 
@@ -382,6 +355,4 @@ describe('GestorCorreos - Favoritos (RF-09)', () => {
 
         expect(gestor.consultarFavoritos().map((c) => c.getId())).toContain(correo.getId());
     });
-});
-
 });
