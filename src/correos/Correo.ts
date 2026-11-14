@@ -119,5 +119,10 @@ export class Correo implements ICorreo {
         this._favorito = false
     }
 
+        
+    clonar(nuevoId: number): Correo {
+        return new Correo(nuevoId, this._asunto, this._cuerpo, this._remitente, [...this._destinatarios])
+    }
+
 
 }
