@@ -16,7 +16,7 @@ describe("Contacto", () => {
 
 describe("comparar direcciones", () =>{
     test("no distingue mayusculas de minusculas", () =>{
-        const contacto = new Contacto("José Fernandez","fernandezjose_cen@ucp.edu.ar" )
+        const contacto = new Contacto("José Fernandez","fernandezjose_cen@ucp.edu.ar" ) 
 
         expect(contacto.tieneDireccion("fernandezjose_cen@ucp.edu.ar")).toBe(true)
 
