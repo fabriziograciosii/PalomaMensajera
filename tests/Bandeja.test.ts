@@ -5,8 +5,8 @@ import { Correo } from '../src/correos/Correo';
 import { Contacto } from '../src/contactos/Contacto';
 
 describe('Entidad Bandeja (RF-06)', () => {
-    const remitente = new Contacto('Ana Pérez', 'ana@ucp.edu.ar');
-    const destinatario = new Contacto('Luis Gómez', 'luis@ucp.edu.ar');
+    const remitente = new Contacto('Ignacio Cremona', 'ignacio@ucp.edu.ar');
+    const destinatario = new Contacto('Fabrizio Graciosi', 'fabrizio@ucp.edu.ar');
 
     test('Se crea vacía, con el tipo indicado', () => {
         const bandeja = new Bandeja(TipoBandeja.ENTRADA);

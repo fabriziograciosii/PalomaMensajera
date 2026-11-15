@@ -1,18 +1,19 @@
 import { IGestorCorreos, CambiosBorrador } from './IGestorCorreos';
 import { TipoBandeja } from '../bandejas/TipoBandeja';
-import { Bandeja } from '../bandejas/Bandeja';
+import { Buzon } from '../buzones/Buzon';
 import { ICorreoConsulta } from '../correos/ICorreoConsulta';
 import { Correo } from '../correos/Correo';
 import { IContactoConsulta } from '../contactos/IContactoConsulta';
 
-export class GestorCorreos implements IGestorCorreos {
-    private readonly _bandejas: Record<TipoBandeja, Bandeja> = Object.values(TipoBandeja).reduce(
-        (acumulado, tipo) => ({ ...acumulado, [tipo]: new Bandeja(tipo) }),
-        {} as Record<TipoBandeja, Bandeja>
-    );
+interface Ubicacion {
+    direccion: string;
+    tipo: TipoBandeja;
+}
 
+export class GestorCorreos implements IGestorCorreos {
+    private readonly _buzones: Map<string, Buzon> = new Map();
     private readonly _correosPorId: Map<number, Correo> = new Map();
-    private readonly _ubicacionActual: Map<number, TipoBandeja> = new Map();
+    private readonly _ubicacionActual: Map<number, Ubicacion> = new Map();
     private readonly _bandejaOrigenAntesDeEliminar: Map<number, TipoBandeja> = new Map();
     private _siguienteId: number = 1;
 
@@ -23,7 +24,7 @@ export class GestorCorreos implements IGestorCorreos {
         destinatarios: ReadonlyArray<IContactoConsulta> = []
     ): ICorreoConsulta {
         const correo = new Correo(this.generarId(), asunto, cuerpo, remitente, [...destinatarios]);
-        this.registrarCorreo(correo, TipoBandeja.BORRADORES);
+        this.registrarCorreo(correo, remitente.getDireccion(), TipoBandeja.BORRADORES);
 
         return correo;
     }
@@ -34,16 +35,25 @@ export class GestorCorreos implements IGestorCorreos {
         cuerpo: string,
         destinatarios: ReadonlyArray<IContactoConsulta>
     ): ICorreoConsulta | undefined {
-        const correo = new Correo(this.generarId(), asunto, cuerpo, remitente, [...destinatarios]);
-        const puedeRecibirse = correo.esValido();
+        const destinatariosUnicos = this.destinatariosUnicos(destinatarios);
+        const prototipo = new Correo(this.generarId(), asunto, cuerpo, remitente, [...destinatariosUnicos]);
+        const puedeRecibirse = prototipo.esValido();
 
-        puedeRecibirse ? this.registrarCorreo(correo, TipoBandeja.ENTRADA) : null;
+        const copiaPrincipal: Correo | undefined = puedeRecibirse
+            ? destinatariosUnicos.reduce<Correo | undefined>((primeraCopia, destinatario) => {
+                  const copia = primeraCopia === undefined ? prototipo : (prototipo.clonar(this.generarId()) as Correo);
+                  this.registrarCorreo(copia, destinatario.getDireccion(), TipoBandeja.ENTRADA);
 
-        return puedeRecibirse ? correo : undefined;
+                  return primeraCopia ?? copia;
+              }, undefined)
+            : undefined;
+
+        return puedeRecibirse ? copiaPrincipal : undefined;
     }
 
     editarBorrador(id: number, cambios: CambiosBorrador): boolean {
-        const esBorrador = this._ubicacionActual.get(id) === TipoBandeja.BORRADORES;
+        const ubicacion = this._ubicacionActual.get(id);
+        const esBorrador = ubicacion?.tipo === TipoBandeja.BORRADORES;
         const correo = esBorrador ? this._correosPorId.get(id) : undefined;
 
         cambios.asunto !== undefined && correo !== undefined ? correo.setAsunto(cambios.asunto) : null;
@@ -56,27 +66,34 @@ export class GestorCorreos implements IGestorCorreos {
     }
 
     enviarBorrador(id: number): boolean {
-        const esBorrador = this._ubicacionActual.get(id) === TipoBandeja.BORRADORES;
+        const ubicacion = this._ubicacionActual.get(id);
+        const esBorrador = ubicacion?.tipo === TipoBandeja.BORRADORES;
         const correo = esBorrador ? this._correosPorId.get(id) : undefined;
         const puedeEnviarse = correo !== undefined && correo.esValido();
 
         puedeEnviarse ? this.moverCorreo(id, TipoBandeja.ENVIADOS) : null;
+        puedeEnviarse
+            ? this.destinatariosUnicos(correo!.getDestinatarios()).forEach((destinatario) =>
+                  this.registrarCorreo(correo!.clonar(this.generarId()) as Correo, destinatario.getDireccion(), TipoBandeja.ENTRADA)
+              )
+            : null;
 
         return puedeEnviarse;
     }
 
     eliminarCorreo(id: number): boolean {
-        const origen = this._ubicacionActual.get(id);
-        const puedeEliminarse = origen !== undefined && origen !== TipoBandeja.ELIMINADOS;
+        const ubicacion = this._ubicacionActual.get(id);
+        const puedeEliminarse = ubicacion !== undefined && ubicacion.tipo !== TipoBandeja.ELIMINADOS;
 
-        puedeEliminarse ? this._bandejaOrigenAntesDeEliminar.set(id, origen as TipoBandeja) : null;
+        puedeEliminarse ? this._bandejaOrigenAntesDeEliminar.set(id, ubicacion!.tipo) : null;
         puedeEliminarse ? this.moverCorreo(id, TipoBandeja.ELIMINADOS) : null;
 
         return puedeEliminarse;
     }
 
     restaurarCorreo(id: number): boolean {
-        const puedeRestaurarse = this._ubicacionActual.get(id) === TipoBandeja.ELIMINADOS;
+        const ubicacion = this._ubicacionActual.get(id);
+        const puedeRestaurarse = ubicacion !== undefined && ubicacion.tipo === TipoBandeja.ELIMINADOS;
         const origen = this._bandejaOrigenAntesDeEliminar.get(id) ?? TipoBandeja.ENTRADA;
 
         puedeRestaurarse ? this._bandejaOrigenAntesDeEliminar.delete(id) : null;
@@ -101,10 +118,8 @@ export class GestorCorreos implements IGestorCorreos {
         return correo !== undefined;
     }
 
-    consultarNoLeidos(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
-        const correosDeLaBandeja = this._bandejas[tipo].obtenerCorreos();
-
-        return correosDeLaBandeja.filter((correo) => !correo.estaLeido());
+    consultarNoLeidos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
+        return this.consultarBandeja(propietario, tipo).filter((correo) => !correo.estaLeido());
     }
 
     enviarCorreo(
@@ -113,12 +128,18 @@ export class GestorCorreos implements IGestorCorreos {
         cuerpo: string,
         destinatarios: ReadonlyArray<IContactoConsulta>
     ): ICorreoConsulta | undefined {
-        const correo = new Correo(this.generarId(), asunto, cuerpo, remitente, [...destinatarios]);
-        const puedeEnviarse = correo.esValido();
+        const destinatariosUnicos = this.destinatariosUnicos(destinatarios);
+        const copiaRemitente = new Correo(this.generarId(), asunto, cuerpo, remitente, [...destinatariosUnicos]);
+        const puedeEnviarse = copiaRemitente.esValido();
 
-        puedeEnviarse ? this.registrarCorreo(correo, TipoBandeja.ENVIADOS) : null;
+        puedeEnviarse ? this.registrarCorreo(copiaRemitente, remitente.getDireccion(), TipoBandeja.ENVIADOS) : null;
+        puedeEnviarse
+            ? destinatariosUnicos.forEach((destinatario) =>
+                  this.registrarCorreo(copiaRemitente.clonar(this.generarId()) as Correo, destinatario.getDireccion(), TipoBandeja.ENTRADA)
+              )
+            : null;
 
-        return puedeEnviarse ? correo : undefined;
+        return puedeEnviarse ? copiaRemitente : undefined;
     }
 
     marcarFavorito(id: number): boolean {
@@ -137,30 +158,57 @@ export class GestorCorreos implements IGestorCorreos {
         return correo !== undefined;
     }
 
-    consultarFavoritos(): ReadonlyArray<ICorreoConsulta> {
-        return Object.values(TipoBandeja)
-            .filter(tipo => tipo !== TipoBandeja.ELIMINADOS)
-            .flatMap(tipo => this._bandejas[tipo].obtenerCorreos())
-            .filter(correo => correo.esFavorito());
+    consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta> {
+        const buzon = this._buzones.get(this.normalizar(propietario));
+
+        return buzon === undefined
+            ? []
+            : Object.values(TipoBandeja)
+                  .filter((tipo) => tipo !== TipoBandeja.ELIMINADOS)
+                  .flatMap((tipo) => buzon.obtenerCorreos(tipo))
+                  .filter((correo) => correo.esFavorito());
     }
 
-    consultarBandeja(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
-        return this._bandejas[tipo].obtenerCorreos();
+    consultarBandeja(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
+        const buzon = this._buzones.get(this.normalizar(propietario));
+
+        return buzon?.obtenerCorreos(tipo) ?? [];
     }
 
-    private registrarCorreo(correo: Correo, destino: TipoBandeja): void {
+    private destinatariosUnicos(destinatarios: ReadonlyArray<IContactoConsulta>): ReadonlyArray<IContactoConsulta> {
+        return destinatarios.filter(
+            (contacto, indice, lista) => lista.findIndex((otro) => otro.tieneDireccion(contacto.getDireccion())) === indice
+        );
+    }
+
+    private normalizar(propietario: IContactoConsulta): string {
+        return propietario.getDireccion().toLowerCase();
+    }
+
+    private registrarCorreo(correo: Correo, direccion: string, destino: TipoBandeja): void {
+        const clave = direccion.toLowerCase();
+        const buzon = this._buzones.get(clave) ?? this.crearBuzon(clave);
+
         this._correosPorId.set(correo.getId(), correo);
-        this._bandejas[destino].agregar(correo);
-        this._ubicacionActual.set(correo.getId(), destino);
+        buzon.agregar(correo, destino);
+        this._ubicacionActual.set(correo.getId(), { direccion: clave, tipo: destino });
+    }
+
+    private crearBuzon(clave: string): Buzon {
+        const buzon = new Buzon();
+        this._buzones.set(clave, buzon);
+
+        return buzon;
     }
 
     private moverCorreo(id: number, destino: TipoBandeja): void {
         const correo = this._correosPorId.get(id) as Correo;
-        const origen = this._ubicacionActual.get(id) as TipoBandeja;
+        const ubicacion = this._ubicacionActual.get(id) as Ubicacion;
+        const buzon = this._buzones.get(ubicacion.direccion) as Buzon;
 
-        this._bandejas[origen].quitar(correo);
-        this._bandejas[destino].agregar(correo);
-        this._ubicacionActual.set(id, destino);
+        buzon.quitar(correo, ubicacion.tipo);
+        buzon.agregar(correo, destino);
+        this._ubicacionActual.set(id, { direccion: ubicacion.direccion, tipo: destino });
     }
 
     private generarId(): number {
