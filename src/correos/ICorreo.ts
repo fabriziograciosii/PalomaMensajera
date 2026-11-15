@@ -13,4 +13,6 @@ export interface ICorreo extends ICorreoConsulta {
     marcarFavorito(): void
     desmarcarFavorito(): void
 
+    clonar(nuevoId: number): ICorreo
+
 }

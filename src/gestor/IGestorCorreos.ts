@@ -29,13 +29,14 @@ export interface IGestorCorreos {
     enviarBorrador(id: number): boolean;
     eliminarCorreo(id: number): boolean;
     restaurarCorreo(id: number): boolean;
-    consultarBandeja(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
     marcarLeido(id: number): boolean;
     marcarNoLeido(id: number): boolean;
-    consultarNoLeidos(tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
     enviarCorreo( remitente: IContactoConsulta, asunto: string, cuerpo: string, destinatarios: ReadonlyArray<IContactoConsulta>): ICorreoConsulta | undefined
 
     marcarFavorito(id:number): boolean
     desmarcarFavorito(id:number): boolean
-    consultarFavoritos(): ReadonlyArray<ICorreoConsulta>
+
+    consultarBandeja(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
+    consultarNoLeidos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
+    consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta>
 }
