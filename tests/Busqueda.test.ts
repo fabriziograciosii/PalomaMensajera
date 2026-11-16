@@ -2,97 +2,91 @@ import { describe, test, expect } from 'vitest';
 import { GestorCorreos } from '../src/gestor/GestorCorreos';
 import { Contacto } from '../src/contactos/Contacto';
 
+// RF-04: buscarCorreos busca SOLO en la bandeja de Entrada (correos recibidos),
+// no en Enviados ni Borradores, y compara contra asunto, cuerpo, remitente
+// (nombre y dirección) y cada destinatario (nombre y dirección).
 describe('GestorCorreos - Búsqueda (RF-04)', () => {
-    const remitente = new Contacto('Ignacio Cremona', 'ignacio@ucp.edu.ar');
-    const destinatario = new Contacto('Fabrizio Graciosi', 'fabrizio@ucp.edu.ar');
+    const fabrizio = new Contacto('Fabrizio Graciosi', 'fabrizio@ucp.edu.ar');
+    const ignacio = new Contacto('Ignacio Cremona', 'ignacio@ucp.edu.ar');
+    const gonzalo = new Contacto('Gonzalo Rodriguez', 'gonzalo@ucp.edu.ar');
 
-    test('encuentra un correo por coincidencia parcial en el asunto', () => {
+    test('encuentra un correo recibido por coincidencia en el asunto', () => {
         const gestor = new GestorCorreos();
-        const correo = gestor.enviarCorreo(remitente, 'Reunión de parciales', 'Hola', [destinatario])!;
+        gestor.recibirCorreo(ignacio, 'Entrega del TP Final', 'Recuerden subirlo a tiempo', [fabrizio]);
 
-        const resultado = gestor.buscarCorreos(remitente, 'parcial');
+        const resultado = gestor.buscarCorreos(fabrizio, 'entrega');
 
-        expect(resultado.map((c) => c.getId())).toContain(correo.getId());
+        expect(resultado.length).toBe(1);
+        expect(resultado[0].getAsunto()).toBe('Entrega del TP Final');
     });
 
-    test('encuentra un correo por coincidencia parcial en el cuerpo', () => {
+    test('encuentra un correo recibido por coincidencia en el cuerpo', () => {
         const gestor = new GestorCorreos();
-        const correo = gestor.enviarCorreo(remitente, 'Aviso', 'Traer el DNI el lunes', [destinatario])!;
+        gestor.recibirCorreo(ignacio, 'Aviso', 'El parcial se traslada al viernes', [fabrizio]);
 
-        const resultado = gestor.buscarCorreos(remitente, 'lunes');
+        const resultado = gestor.buscarCorreos(fabrizio, 'parcial');
 
-        expect(resultado.map((c) => c.getId())).toContain(correo.getId());
+        expect(resultado.length).toBe(1);
     });
 
-        test('encuentra un correo por el nombre del remitente', () => {
+    test('encuentra un correo recibido por coincidencia en el remitente (nombre o dirección)', () => {
         const gestor = new GestorCorreos();
-        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+        gestor.recibirCorreo(ignacio, 'Aviso', 'Hola', [fabrizio]);
 
-        const resultado = gestor.buscarCorreos(destinatario, 'Cremona');
-
-        expect(resultado.map((c) => c.getId())).toContain(correo.getId());
+        expect(gestor.buscarCorreos(fabrizio, 'cremona').length).toBe(1);
+        expect(gestor.buscarCorreos(fabrizio, 'ignacio@ucp').length).toBe(1);
     });
 
-    test('encuentra un correo por la dirección del remitente', () => {
+    test('encuentra un correo recibido por coincidencia en un destinatario (nombre o dirección)', () => {
         const gestor = new GestorCorreos();
-        const correo = gestor.recibirCorreo(remitente, 'Aviso', 'Hola', [destinatario])!;
+        gestor.recibirCorreo(ignacio, 'Reunión de grupo', 'Coordinar el TP', [fabrizio, gonzalo]);
 
-        const resultado = gestor.buscarCorreos(destinatario, 'ignacio@ucp');
+        const porNombreDestinatario = gestor.buscarCorreos(fabrizio, 'gonzalo rodriguez');
+        const porDireccionDestinatario = gestor.buscarCorreos(fabrizio, 'gonzalo@ucp');
 
-        expect(resultado.map((c) => c.getId())).toContain(correo.getId());
+        expect(porNombreDestinatario.length).toBe(1);
+        expect(porDireccionDestinatario.length).toBe(1);
     });
 
-    test('la búsqueda no distingue mayúsculas', () => {
+    test('la búsqueda no es sensible a mayúsculas/minúsculas', () => {
         const gestor = new GestorCorreos();
-        const correo = gestor.enviarCorreo(remitente, 'Examen Final', 'Hola', [destinatario])!;
+        gestor.recibirCorreo(ignacio, 'EXAMEN FINAL', 'Hola', [fabrizio]);
 
-        const resultado = gestor.buscarCorreos(remitente, 'examen final');
-
-        expect(resultado.map((c) => c.getId())).toContain(correo.getId());
+        expect(gestor.buscarCorreos(fabrizio, 'examen final').length).toBe(1);
     });
 
-        test('un texto vacío no devuelve ningún correo', () => {
+    test('un texto vacío no devuelve ningún correo', () => {
         const gestor = new GestorCorreos();
-        gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
+        gestor.recibirCorreo(ignacio, 'Aviso', 'Hola', [fabrizio]);
 
-        expect(gestor.buscarCorreos(remitente, '')).toEqual([]);
+        expect(gestor.buscarCorreos(fabrizio, '').length).toBe(0);
     });
 
-    test('un texto que no coincide con nada devuelve vacío', () => {
+    test('no busca en correos de Enviados ni de Borradores', () => {
         const gestor = new GestorCorreos();
-        gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
+        gestor.crearBorrador(fabrizio, 'Borrador con Entrega', 'Hola');
+        gestor.enviarCorreo(fabrizio, 'Enviado con Entrega', 'Hola', [ignacio]);
 
-        expect(gestor.buscarCorreos(remitente, 'xyzxyz')).toEqual([]);
+        const resultado = gestor.buscarCorreos(fabrizio, 'entrega');
+
+        expect(resultado.length).toBe(0);
     });
 
-    test('busca en Entrada, Enviados y Borradores', () => {
+    test('devuelve varios correos recibidos si todos cumplen', () => {
         const gestor = new GestorCorreos();
-        const recibido = gestor.recibirCorreo(remitente, 'Novedad entrada', 'Hola', [destinatario])!;
-        const enviado = gestor.enviarCorreo(remitente, 'Novedad enviada', 'Hola', [destinatario])!;
-        const borrador = gestor.crearBorrador(remitente, 'Novedad borrador', 'Hola', [destinatario]);
+        gestor.recibirCorreo(ignacio, 'Examen de Programación', 'Hola', [fabrizio]);
+        gestor.recibirCorreo(gonzalo, 'Examen de Base de Datos', 'Hola', [fabrizio]);
+        gestor.recibirCorreo(ignacio, 'Aviso general', 'Sin relación', [fabrizio]);
 
-        expect(gestor.buscarCorreos(destinatario, 'Novedad').map((c) => c.getId())).toContain(recibido.getId());
-        expect(gestor.buscarCorreos(remitente, 'Novedad').map((c) => c.getId())).toContain(enviado.getId());
-        expect(gestor.buscarCorreos(remitente, 'Novedad').map((c) => c.getId())).toContain(borrador.getId());
+        const resultado = gestor.buscarCorreos(fabrizio, 'examen');
+
+        expect(resultado.length).toBe(2);
     });
 
-    test('no busca en Eliminados', () => {
+    test('no encuentra correos de otro propietario', () => {
         const gestor = new GestorCorreos();
-        const correo = gestor.enviarCorreo(remitente, 'Aviso importante', 'Hola', [destinatario])!;
-        gestor.eliminarCorreo(correo.getId());
+        gestor.recibirCorreo(ignacio, 'Entrega del TP', 'Hola', [gonzalo]);
 
-        expect(gestor.buscarCorreos(remitente, 'importante')).toEqual([]);
-    });
-
-    test('solo trae resultados del buzón del propietario consultado', () => {
-        const gestor = new GestorCorreos();
-        gestor.enviarCorreo(remitente, 'Aviso compartido', 'Hola', [destinatario]);
-
-        const resultadoRemitente = gestor.buscarCorreos(remitente, 'compartido');
-        const resultadoDestinatario = gestor.buscarCorreos(destinatario, 'compartido');
-
-        expect(resultadoRemitente.length).toBe(1);
-        expect(resultadoDestinatario.length).toBe(1);
-        expect(resultadoRemitente[0].getId()).not.toBe(resultadoDestinatario[0].getId());
+        expect(gestor.buscarCorreos(fabrizio, 'entrega').length).toBe(0);
     });
 });
