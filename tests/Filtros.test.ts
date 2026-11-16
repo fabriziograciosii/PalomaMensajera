@@ -114,3 +114,65 @@ describe("Filtros  conTexto", () => {
 
 
 });
+
+describe("Filtros todos, alguno, no, personalizado)", () => {
+    const remitente = new Contacto("Ignacio Cremona", "ignacio@ucp.edu.ar");
+    const destinatario = new Contacto("Fabrizio Graciosi", "fabrizio@ucp.edu.ar");
+
+    test("personalizado() aplica el criterio recibido", () => {
+        const correo = new Correo(1, "Aviso", "Hola", remitente, [destinatario]);
+        const filtro = Filtros.personalizado((c) => c.getAsunto() === "Aviso");
+
+        expect(filtro.cumple(correo)).toBe(true);
+    });
+
+    test("todos() combina filtros con Y lógico", () => {
+        const correo = new Correo(1, "Aviso", "Hola", remitente, [destinatario]);
+
+
+        correo.marcarFavorito();
+        const filtro = Filtros.todos([Filtros.favorito(), Filtros.noLeido()]);
+
+
+        expect(filtro.cumple(correo)).toBe(true);
+
+
+        correo.marcarLeido();
+
+        expect(filtro.cumple(correo)).toBe(false);
+
+    });
+
+    test("alguno() combina filtros con O lógico", () => {
+        const correo = new Correo(1, "Aviso", "Hola", remitente, [destinatario]);
+
+
+        correo.marcarLeido();
+        const filtro = Filtros.alguno([Filtros.favorito(), Filtros.noLeido()]);
+
+
+        expect(filtro.cumple(correo)).toBe(false);
+
+        correo.marcarFavorito();
+
+        expect(filtro.cumple(correo)).toBe(true);
+
+    });
+
+    test("no() invierte el resultado de un filtro", () => {
+
+        const correo = new Correo(1, "Aviso", "Hola", remitente, [destinatario]);
+
+        const filtro = Filtros.no(Filtros.favorito());
+
+
+        expect(filtro.cumple(correo)).toBe(true);
+
+        correo.marcarFavorito();
+
+        expect(filtro.cumple(correo)).toBe(false);
+
+    });
+
+    
+});
