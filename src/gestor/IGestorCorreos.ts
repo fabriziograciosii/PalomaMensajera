@@ -51,9 +51,20 @@ export interface IGestorCorreos {
     consultarBandeja(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
     consultarNoLeidos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
     consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta>
+<<<<<<< HEAD
 
     consultarConFiltro(propietario: IContactoConsulta, tipo: TipoBandeja, filtro: IFiltro): ReadonlyArray<ICorreoConsulta>;
 
     estadisticas(propietario: IContactoConsulta): Estadisticas;
 
 }
+=======
+        consultarBandeja(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
+    consultarNoLeidos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
+    consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta>
+
+    // RF-04: busca SOLO en la bandeja de Entrada, comparando asunto, cuerpo,
+    // remitente (nombre y dirección) y cada destinatario (nombre y dirección).
+    buscarCorreos(propietario: IContactoConsulta, texto: string): ReadonlyArray<ICorreoConsulta>;
+}
+>>>>>>> origin/main
