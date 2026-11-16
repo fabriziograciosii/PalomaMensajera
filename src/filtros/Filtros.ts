@@ -2,9 +2,7 @@ import { IFiltro } from './IFiltro';
 import { Filtro } from './Filtro';
 import { ICorreoConsulta } from '../correos/ICorreoConsulta';
 
-// Fábrica de filtros: no guarda estado, solo arma objetos IFiltro.
-// Los filtros compuestos (todos/alguno/no) permiten combinar criterios
-// sin que el código que consulta tenga que escribir ningún if.
+
 export class Filtros {
     static favorito(): IFiltro {
         return new Filtro('favorito', (correo) => correo.esFavorito());
@@ -21,12 +19,7 @@ export class Filtros {
             `con texto "${texto}"`,
             (correo) =>
                 buscado.length > 0 &&
-                [
-                    correo.getAsunto(),
-                    correo.getCuerpo(),
-                    correo.getRemitente().getNombreCompleto(),
-                    correo.getRemitente().getDireccion(),
-                ].some((campo) => campo.toLowerCase().includes(buscado))
+                Filtros.textosDelCorreo(correo).some((campo) => campo.toLowerCase().includes(buscado))
         );
     }
 
@@ -48,5 +41,20 @@ export class Filtros {
 
     static no(filtro: IFiltro): IFiltro {
         return new Filtro(`no ${filtro.getNombre()}`, (correo) => !filtro.cumple(correo));
+    }
+
+    // Todos los textos donde puede aparecer lo que se busca (RF-04).
+    private static textosDelCorreo(correo: ICorreoConsulta): ReadonlyArray<string> {
+        const textosDestinatarios = correo
+            .getDestinatarios()
+            .flatMap((destinatario) => [destinatario.getNombreCompleto(), destinatario.getDireccion()]);
+
+        return [
+            correo.getAsunto(),
+            correo.getCuerpo(),
+            correo.getRemitente().getNombreCompleto(),
+            correo.getRemitente().getDireccion(),
+            ...textosDestinatarios,
+        ];
     }
 }
