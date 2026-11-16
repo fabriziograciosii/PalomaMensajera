@@ -50,4 +50,49 @@ describe('GestorCorreos - Búsqueda (RF-04)', () => {
 
         expect(resultado.map((c) => c.getId())).toContain(correo.getId());
     });
+
+        test('un texto vacío no devuelve ningún correo', () => {
+        const gestor = new GestorCorreos();
+        gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
+
+        expect(gestor.buscarCorreos(remitente, '')).toEqual([]);
+    });
+
+    test('un texto que no coincide con nada devuelve vacío', () => {
+        const gestor = new GestorCorreos();
+        gestor.enviarCorreo(remitente, 'Aviso', 'Hola', [destinatario]);
+
+        expect(gestor.buscarCorreos(remitente, 'xyzxyz')).toEqual([]);
+    });
+
+    test('busca en Entrada, Enviados y Borradores', () => {
+        const gestor = new GestorCorreos();
+        const recibido = gestor.recibirCorreo(remitente, 'Novedad entrada', 'Hola', [destinatario])!;
+        const enviado = gestor.enviarCorreo(remitente, 'Novedad enviada', 'Hola', [destinatario])!;
+        const borrador = gestor.crearBorrador(remitente, 'Novedad borrador', 'Hola', [destinatario]);
+
+        expect(gestor.buscarCorreos(destinatario, 'Novedad').map((c) => c.getId())).toContain(recibido.getId());
+        expect(gestor.buscarCorreos(remitente, 'Novedad').map((c) => c.getId())).toContain(enviado.getId());
+        expect(gestor.buscarCorreos(remitente, 'Novedad').map((c) => c.getId())).toContain(borrador.getId());
+    });
+
+    test('no busca en Eliminados', () => {
+        const gestor = new GestorCorreos();
+        const correo = gestor.enviarCorreo(remitente, 'Aviso importante', 'Hola', [destinatario])!;
+        gestor.eliminarCorreo(correo.getId());
+
+        expect(gestor.buscarCorreos(remitente, 'importante')).toEqual([]);
+    });
+
+    test('solo trae resultados del buzón del propietario consultado', () => {
+        const gestor = new GestorCorreos();
+        gestor.enviarCorreo(remitente, 'Aviso compartido', 'Hola', [destinatario]);
+
+        const resultadoRemitente = gestor.buscarCorreos(remitente, 'compartido');
+        const resultadoDestinatario = gestor.buscarCorreos(destinatario, 'compartido');
+
+        expect(resultadoRemitente.length).toBe(1);
+        expect(resultadoDestinatario.length).toBe(1);
+        expect(resultadoRemitente[0].getId()).not.toBe(resultadoDestinatario[0].getId());
+    });
 });
