@@ -1,16 +1,17 @@
 import { TipoBandeja } from "../bandejas/TipoBandeja"
 import { ICorreoConsulta } from "../correos/ICorreoConsulta"
 import { IContactoConsulta } from "../contactos/IContactoConsulta"
+import { IFiltro } from "../filtros/IFiltro"
+
 
 export interface CambiosBorrador {
     asunto?: string;
     cuerpo?: string;
     destinatarios?: ReadonlyArray<IContactoConsulta>;
+
 }
 
-// Coordinador central: es el único punto de entrada para crear, mover y consultar correos.
-// Nunca entrega un Correo mutable hacia afuera, solo su vista de consulta (ICorreoConsulta).
-// Ninguna operación lanza errores: devuelve boolean (o undefined) para indicar si se pudo hacer.
+
 
 export interface IGestorCorreos {
     crearBorrador(
@@ -39,4 +40,6 @@ export interface IGestorCorreos {
     consultarBandeja(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
     consultarNoLeidos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
     consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta>
+
+    consultarConFiltro(propietario: IContactoConsulta, tipo: TipoBandeja, filtro: IFiltro): ReadonlyArray<ICorreoConsulta>;
 }
