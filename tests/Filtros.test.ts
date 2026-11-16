@@ -201,3 +201,20 @@ describe('Filtros - nombres y conNombre', () => {
         expect(filtro.cumple(correo)).toBe(false);
     });
 });
+describe('Filtros - conTexto en los destinatarios', () => {
+    const remitente = new Contacto('Ignacio Cremona', 'ignacio@ucp.edu.ar');
+    const primero = new Contacto('Fabrizio Graciosi', 'fabrizio@ucp.edu.ar');
+    const segundo = new Contacto('Jere Gomez', 'jere@gmail.com');
+
+    test('encuentra coincidencias en el nombre de un destinatario', () => {
+        const correo = new Correo(1, 'Aviso', 'Hola', remitente, [primero, segundo]);
+
+        expect(Filtros.conTexto('graciosi').cumple(correo)).toBe(true);
+    });
+
+    test('encuentra coincidencias en la dirección de cualquier destinatario', () => {
+        const correo = new Correo(1, 'Aviso', 'Hola', remitente, [primero, segundo]);
+
+        expect(Filtros.conTexto('JERE@gmail').cumple(correo)).toBe(true);
+    });
+});
