@@ -1,6 +1,7 @@
 import { IFiltro } from './IFiltro';
 import { Filtro } from './Filtro';
 import { ICorreoConsulta } from '../correos/ICorreoConsulta';
+import { IContactoConsulta } from '../contactos/IContactoConsulta';
 
 
 export class Filtros {
@@ -20,6 +21,30 @@ export class Filtros {
             (correo) =>
                 buscado.length > 0 &&
                 Filtros.textosDelCorreo(correo).some((campo) => campo.toLowerCase().includes(buscado))
+        );
+    }
+
+    static asuntoContiene(texto: string): IFiltro {
+        return new Filtro(`asunto contiene "${texto}"`, (correo) =>
+            correo.getAsunto().toLowerCase().includes(texto.toLowerCase())
+        );
+    }
+
+    static cuerpoContiene(texto: string): IFiltro {
+        return new Filtro(`cuerpo contiene "${texto}"`, (correo) =>
+            correo.getCuerpo().toLowerCase().includes(texto.toLowerCase())
+        );
+    }
+
+    static remitenteDelDominio(dominio: string): IFiltro {
+        return new Filtro(`remitente del dominio ${dominio}`, (correo) =>
+            correo.getRemitente().getDireccion().toLowerCase().endsWith(dominio.toLowerCase())
+        );
+    }
+
+    static remitenteEs(contacto: IContactoConsulta): IFiltro {
+        return new Filtro(`remitente es ${contacto.getDireccion()}`, (correo) =>
+            correo.getRemitente().tieneDireccion(contacto.getDireccion())
         );
     }
 
