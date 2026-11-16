@@ -218,3 +218,40 @@ describe('Filtros - conTexto en los destinatarios', () => {
         expect(Filtros.conTexto('JERE@gmail').cumple(correo)).toBe(true);
     });
 });
+describe('Filtros - bloques para armar filtros', () => {
+    const ucp = new Contacto('Ana Profesora', 'ana@ucp.edu.ar');
+    const otro = new Contacto('Jere Gomez', 'jere@gmail.com');
+    const destinatario = new Contacto('Fabrizio Graciosi', 'fabrizio@ucp.edu.ar');
+
+    test('asuntoContiene() mira solo el asunto y no distingue mayúsculas', () => {
+        const enAsunto = new Correo(1, 'Examen final', 'Hola', ucp, [destinatario]);
+        const enCuerpo = new Correo(2, 'Aviso', 'Examen final', ucp, [destinatario]);
+
+        expect(Filtros.asuntoContiene('examen').cumple(enAsunto)).toBe(true);
+        expect(Filtros.asuntoContiene('examen').cumple(enCuerpo)).toBe(false);
+    });
+
+    test('cuerpoContiene() mira solo el cuerpo y no distingue mayúsculas', () => {
+        const enCuerpo = new Correo(1, 'Aviso', 'Fecha de ENTREGA', ucp, [destinatario]);
+        const enAsunto = new Correo(2, 'Entrega', 'Hola', ucp, [destinatario]);
+
+        expect(Filtros.cuerpoContiene('entrega').cumple(enCuerpo)).toBe(true);
+        expect(Filtros.cuerpoContiene('entrega').cumple(enAsunto)).toBe(false);
+    });
+
+    test('remitenteDelDominio() compara el final de la dirección del remitente', () => {
+        const deUcp = new Correo(1, 'Aviso', 'Hola', ucp, [destinatario]);
+        const deOtro = new Correo(2, 'Aviso', 'Hola', otro, [destinatario]);
+
+        expect(Filtros.remitenteDelDominio('@UCP.edu.ar').cumple(deUcp)).toBe(true);
+        expect(Filtros.remitenteDelDominio('@ucp.edu.ar').cumple(deOtro)).toBe(false);
+    });
+
+    test('remitenteEs() cumple solo con el contacto indicado', () => {
+        const deUcp = new Correo(1, 'Aviso', 'Hola', ucp, [destinatario]);
+        const deOtro = new Correo(2, 'Aviso', 'Hola', otro, [destinatario]);
+
+        expect(Filtros.remitenteEs(otro).cumple(deOtro)).toBe(true);
+        expect(Filtros.remitenteEs(otro).cumple(deUcp)).toBe(false);
+    });
+});
