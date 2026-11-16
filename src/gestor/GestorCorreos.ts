@@ -13,7 +13,10 @@ interface Ubicacion {
 }
 
 export class GestorCorreos implements IGestorCorreos {
+    private static readonly MAX_FILTROS = 5;
+
     private readonly _buzones: Map<string, Buzon> = new Map();
+    private readonly _filtros: IFiltro[] = [];
     private readonly _correosPorId: Map<number, Correo> = new Map();
     private readonly _ubicacionActual: Map<number, Ubicacion> = new Map();
     private readonly _bandejaOrigenAntesDeEliminar: Map<number, TipoBandeja> = new Map();
@@ -171,6 +174,30 @@ export class GestorCorreos implements IGestorCorreos {
         const buzon = this._buzones.get(this.normalizar(propietario));
 
         return buzon?.obtenerCorreos(tipo) ?? [];
+    }
+
+    registrarFiltro(filtro: IFiltro): boolean {
+        const hayLugar = this._filtros.length < GestorCorreos.MAX_FILTROS;
+        const nombreLibre = this.obtenerFiltro(filtro.getNombre()) === undefined;
+        const puedeRegistrarse = hayLugar && nombreLibre;
+
+        puedeRegistrarse ? this._filtros.push(filtro) : null;
+
+        return puedeRegistrarse;
+    }
+
+    obtenerFiltro(nombre: string): IFiltro | undefined {
+        return this._filtros.find((filtro) => filtro.getNombre() === nombre);
+    }
+
+    listarFiltros(): ReadonlyArray<IFiltro> {
+        return [...this._filtros];
+    }
+
+    aplicarFiltro(nombre: string, propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
+        const filtro = this.obtenerFiltro(nombre);
+
+        return filtro === undefined ? [] : this.consultarConFiltro(propietario, tipo, filtro);
     }
 
         buscarCorreos(propietario: IContactoConsulta, texto: string): ReadonlyArray<ICorreoConsulta> {

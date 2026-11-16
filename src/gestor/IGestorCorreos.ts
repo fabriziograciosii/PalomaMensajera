@@ -53,6 +53,10 @@ export interface IGestorCorreos {
     consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta>
 
     consultarConFiltro(propietario: IContactoConsulta, tipo: TipoBandeja, filtro: IFiltro): ReadonlyArray<ICorreoConsulta>;
+    registrarFiltro(filtro: IFiltro): boolean;
+    obtenerFiltro(nombre: string): IFiltro | undefined;
+    listarFiltros(): ReadonlyArray<IFiltro>;
+    aplicarFiltro(nombre: string, propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
 
    
     buscarCorreos(propietario: IContactoConsulta, texto: string): ReadonlyArray<ICorreoConsulta>;
