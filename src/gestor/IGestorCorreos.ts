@@ -6,9 +6,20 @@ import { IFiltro } from "../filtros/IFiltro"
 
 export interface CambiosBorrador {
     asunto?: string;
+    
     cuerpo?: string;
     destinatarios?: ReadonlyArray<IContactoConsulta>;
 
+}
+
+export interface Estadisticas {
+
+    total: number;
+    
+    leidos: number;
+    noLeidos: number;
+    favoritos: number;
+    porBandeja: Record<TipoBandeja, number>;
 }
 
 
@@ -42,4 +53,7 @@ export interface IGestorCorreos {
     consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta>
 
     consultarConFiltro(propietario: IContactoConsulta, tipo: TipoBandeja, filtro: IFiltro): ReadonlyArray<ICorreoConsulta>;
+
+    estadisticas(propietario: IContactoConsulta): Estadisticas;
+
 }

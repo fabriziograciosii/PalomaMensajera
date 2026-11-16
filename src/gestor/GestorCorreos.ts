@@ -1,4 +1,4 @@
-import { IGestorCorreos, CambiosBorrador } from './IGestorCorreos';
+import { IGestorCorreos, CambiosBorrador, Estadisticas } from "./IGestorCorreos";
 import { TipoBandeja } from '../bandejas/TipoBandeja';
 import { Buzon } from '../buzones/Buzon';
 import { ICorreoConsulta } from '../correos/ICorreoConsulta';
@@ -219,4 +219,23 @@ export class GestorCorreos implements IGestorCorreos {
     consultarConFiltro(propietario: IContactoConsulta, tipo: TipoBandeja, filtro: IFiltro): ReadonlyArray<ICorreoConsulta> {
     return this.consultarBandeja(propietario, tipo).filter((correo) => filtro.cumple(correo));
     }
+
+    estadisticas(propietario: IContactoConsulta): Estadisticas {
+    const porBandeja = Object.values(TipoBandeja).reduce(
+        (acumulado, tipo) => ({ ...acumulado, [tipo]: this.consultarBandeja(propietario, tipo).length }),
+        {} as Record<TipoBandeja, number>
+    );
+
+    const sinEliminados = Object.values(TipoBandeja)
+        .filter((tipo) => tipo !== TipoBandeja.ELIMINADOS)
+        .flatMap((tipo) => this.consultarBandeja(propietario, tipo));
+
+    return {
+        total: sinEliminados.length,
+        leidos: sinEliminados.filter((correo) => correo.estaLeido()).length,
+        noLeidos: sinEliminados.filter((correo) => !correo.estaLeido()).length,
+        favoritos: sinEliminados.filter((correo) => correo.esFavorito()).length,
+        porBandeja,
+    };
+}
 }
