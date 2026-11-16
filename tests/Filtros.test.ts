@@ -176,3 +176,28 @@ describe("Filtros todos, alguno, no, personalizado)", () => {
 
     
 });
+describe('Filtros - nombres y conNombre', () => {
+    test('los filtros básicos tienen un nombre', () => {
+        expect(Filtros.favorito().getNombre()).toBe('favorito');
+        expect(Filtros.noLeido().getNombre()).toBe('no leído');
+        expect(Filtros.conTexto('examen').getNombre()).toBe('con texto "examen"');
+    });
+
+    test('los combinadores tienen un nombre', () => {
+        expect(Filtros.todos([Filtros.favorito()]).getNombre()).toBe('todos');
+        expect(Filtros.alguno([Filtros.favorito()]).getNombre()).toBe('alguno');
+        expect(Filtros.no(Filtros.favorito()).getNombre()).toBe('no favorito');
+    });
+
+    test('conNombre() cambia el nombre pero mantiene la condición', () => {
+        const remitente = new Contacto('Ignacio Cremona', 'ignacio@ucp.edu.ar');
+        const destinatario = new Contacto('Fabrizio Graciosi', 'fabrizio@ucp.edu.ar');
+        const correo = new Correo(1, 'Aviso', 'Hola', remitente, [destinatario]);
+        const filtro = Filtros.conNombre('Sin leer', Filtros.noLeido());
+
+        expect(filtro.getNombre()).toBe('Sin leer');
+        expect(filtro.cumple(correo)).toBe(true);
+        correo.marcarLeido();
+        expect(filtro.cumple(correo)).toBe(false);
+    });
+});
