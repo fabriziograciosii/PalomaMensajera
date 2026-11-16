@@ -1,16 +1,28 @@
 import { TipoBandeja } from "../bandejas/TipoBandeja"
 import { ICorreoConsulta } from "../correos/ICorreoConsulta"
 import { IContactoConsulta } from "../contactos/IContactoConsulta"
+import { IFiltro } from "../filtros/IFiltro"
+
 
 export interface CambiosBorrador {
     asunto?: string;
+    
     cuerpo?: string;
     destinatarios?: ReadonlyArray<IContactoConsulta>;
+
 }
 
-// Coordinador central: es el único punto de entrada para crear, mover y consultar correos.
-// Nunca entrega un Correo mutable hacia afuera, solo su vista de consulta (ICorreoConsulta).
-// Ninguna operación lanza errores: devuelve boolean (o undefined) para indicar si se pudo hacer.
+export interface Estadisticas {
+
+    total: number;
+    
+    leidos: number;
+    noLeidos: number;
+    favoritos: number;
+    porBandeja: Record<TipoBandeja, number>;
+}
+
+
 
 export interface IGestorCorreos {
     crearBorrador(
@@ -39,11 +51,22 @@ export interface IGestorCorreos {
     consultarBandeja(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
     consultarNoLeidos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
     consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta>
-        consultarBandeja(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
-    consultarNoLeidos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
-    consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta>
 
-    // RF-04: busca SOLO en la bandeja de Entrada, comparando asunto, cuerpo,
-    // remitente (nombre y dirección) y cada destinatario (nombre y dirección).
+    consultarConFiltro(propietario: IContactoConsulta, tipo: TipoBandeja, filtro: IFiltro): ReadonlyArray<ICorreoConsulta>;
+    registrarFiltro(filtro: IFiltro): boolean;
+    obtenerFiltro(nombre: string): IFiltro | undefined;
+    listarFiltros(): ReadonlyArray<IFiltro>;
+    aplicarFiltro(nombre: string, propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta>;
+    consultarFavoritosConFiltro(propietario: IContactoConsulta, filtro: IFiltro): ReadonlyArray<ICorreoConsulta>;
+    obtenerAsuntos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<string>;
+    obtenerCorreosQueCumplan(
+        propietario: IContactoConsulta,
+        tipo: TipoBandeja,
+        condicion: (correo: ICorreoConsulta) => boolean
+    ): ReadonlyArray<ICorreoConsulta>;
+
+   
     buscarCorreos(propietario: IContactoConsulta, texto: string): ReadonlyArray<ICorreoConsulta>;
+
+    estadisticas(propietario: IContactoConsulta): Estadisticas;
 }

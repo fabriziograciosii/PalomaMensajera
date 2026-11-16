@@ -1,9 +1,11 @@
-import { IGestorCorreos, CambiosBorrador } from './IGestorCorreos';
+import { IGestorCorreos, CambiosBorrador, Estadisticas } from "./IGestorCorreos";
 import { TipoBandeja } from '../bandejas/TipoBandeja';
 import { Buzon } from '../buzones/Buzon';
 import { ICorreoConsulta } from '../correos/ICorreoConsulta';
 import { Correo } from '../correos/Correo';
 import { IContactoConsulta } from '../contactos/IContactoConsulta';
+import { IFiltro } from "../filtros/IFiltro";
+import { Filtros } from "../filtros/Filtros";
 
 interface Ubicacion {
     direccion: string;
@@ -11,7 +13,10 @@ interface Ubicacion {
 }
 
 export class GestorCorreos implements IGestorCorreos {
+    private static readonly MAX_FILTROS = 5;
+
     private readonly _buzones: Map<string, Buzon> = new Map();
+    private readonly _filtros: IFiltro[] = [];
     private readonly _correosPorId: Map<number, Correo> = new Map();
     private readonly _ubicacionActual: Map<number, Ubicacion> = new Map();
     private readonly _bandejaOrigenAntesDeEliminar: Map<number, TipoBandeja> = new Map();
@@ -119,7 +124,8 @@ export class GestorCorreos implements IGestorCorreos {
     }
 
     consultarNoLeidos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
-        return this.consultarBandeja(propietario, tipo).filter((correo) => !correo.estaLeido());
+    return this.consultarConFiltro(propietario, tipo, Filtros.noLeido());
+    
     }
 
     enviarCorreo(
@@ -159,20 +165,55 @@ export class GestorCorreos implements IGestorCorreos {
     }
 
     consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta> {
-        const buzon = this._buzones.get(this.normalizar(propietario));
-
-        return buzon === undefined
-            ? []
-            : Object.values(TipoBandeja)
-                  .filter((tipo) => tipo !== TipoBandeja.ELIMINADOS)
-                  .flatMap((tipo) => buzon.obtenerCorreos(tipo))
-                  .filter((correo) => correo.esFavorito());
+    return Object.values(TipoBandeja)
+        .filter((tipo) => tipo !== TipoBandeja.ELIMINADOS)
+        .flatMap((tipo) => this.consultarConFiltro(propietario, tipo, Filtros.favorito()));
     }
 
     consultarBandeja(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
         const buzon = this._buzones.get(this.normalizar(propietario));
 
         return buzon?.obtenerCorreos(tipo) ?? [];
+    }
+
+    registrarFiltro(filtro: IFiltro): boolean {
+        const hayLugar = this._filtros.length < GestorCorreos.MAX_FILTROS;
+        const nombreLibre = this.obtenerFiltro(filtro.getNombre()) === undefined;
+        const puedeRegistrarse = hayLugar && nombreLibre;
+
+        puedeRegistrarse ? this._filtros.push(filtro) : null;
+
+        return puedeRegistrarse;
+    }
+
+    obtenerFiltro(nombre: string): IFiltro | undefined {
+        return this._filtros.find((filtro) => filtro.getNombre() === nombre);
+    }
+
+    listarFiltros(): ReadonlyArray<IFiltro> {
+        return [...this._filtros];
+    }
+
+    aplicarFiltro(nombre: string, propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
+        const filtro = this.obtenerFiltro(nombre);
+
+        return filtro === undefined ? [] : this.consultarConFiltro(propietario, tipo, filtro);
+    }
+
+    consultarFavoritosConFiltro(propietario: IContactoConsulta, filtro: IFiltro): ReadonlyArray<ICorreoConsulta> {
+        return this.consultarFavoritos(propietario).filter((correo) => filtro.cumple(correo));
+    }
+
+    obtenerAsuntos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<string> {
+        return this.consultarBandeja(propietario, tipo).map((correo) => correo.getAsunto());
+    }
+
+    obtenerCorreosQueCumplan(
+        propietario: IContactoConsulta,
+        tipo: TipoBandeja,
+        condicion: (correo: ICorreoConsulta) => boolean
+    ): ReadonlyArray<ICorreoConsulta> {
+        return this.consultarBandeja(propietario, tipo).filter(condicion);
     }
 
         buscarCorreos(propietario: IContactoConsulta, texto: string): ReadonlyArray<ICorreoConsulta> {
@@ -238,4 +279,27 @@ export class GestorCorreos implements IGestorCorreos {
 
         return id;
     }
+
+    consultarConFiltro(propietario: IContactoConsulta, tipo: TipoBandeja, filtro: IFiltro): ReadonlyArray<ICorreoConsulta> {
+    return this.consultarBandeja(propietario, tipo).filter((correo) => filtro.cumple(correo));
+    }
+
+    estadisticas(propietario: IContactoConsulta): Estadisticas {
+    const porBandeja = Object.values(TipoBandeja).reduce(
+        (acumulado, tipo) => ({ ...acumulado, [tipo]: this.consultarBandeja(propietario, tipo).length }),
+        {} as Record<TipoBandeja, number>
+    );
+
+    const sinEliminados = Object.values(TipoBandeja)
+        .filter((tipo) => tipo !== TipoBandeja.ELIMINADOS)
+        .flatMap((tipo) => this.consultarBandeja(propietario, tipo));
+
+    return {
+        total: sinEliminados.length,
+        leidos: sinEliminados.filter((correo) => correo.estaLeido()).length,
+        noLeidos: sinEliminados.filter((correo) => !correo.estaLeido()).length,
+        favoritos: sinEliminados.filter((correo) => correo.esFavorito()).length,
+        porBandeja,
+    };
+}
 }
