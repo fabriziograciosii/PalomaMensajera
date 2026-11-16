@@ -175,6 +175,27 @@ export class GestorCorreos implements IGestorCorreos {
         return buzon?.obtenerCorreos(tipo) ?? [];
     }
 
+        buscarCorreos(propietario: IContactoConsulta, texto: string): ReadonlyArray<ICorreoConsulta> {
+        const buscado = texto.toLowerCase();
+
+        return buscado.length === 0
+            ? []
+            : this.consultarBandeja(propietario, TipoBandeja.ENTRADA).filter((correo) =>
+                  this.coincideConTexto(correo, buscado)
+              );
+    }
+
+    private coincideConTexto(correo: ICorreoConsulta, buscado: string): boolean {
+        const camposDelRemitente = [correo.getRemitente().getNombreCompleto(), correo.getRemitente().getDireccion()];
+        const camposDeDestinatarios = correo
+            .getDestinatarios()
+            .flatMap((destinatario) => [destinatario.getNombreCompleto(), destinatario.getDireccion()]);
+
+        return [correo.getAsunto(), correo.getCuerpo(), ...camposDelRemitente, ...camposDeDestinatarios].some((campo) =>
+            campo.toLowerCase().includes(buscado)
+        );
+    }
+
     private destinatariosUnicos(destinatarios: ReadonlyArray<IContactoConsulta>): ReadonlyArray<IContactoConsulta> {
         return destinatarios.filter(
             (contacto, indice, lista) => lista.findIndex((otro) => otro.tieneDireccion(contacto.getDireccion())) === indice
