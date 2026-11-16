@@ -200,6 +200,22 @@ export class GestorCorreos implements IGestorCorreos {
         return filtro === undefined ? [] : this.consultarConFiltro(propietario, tipo, filtro);
     }
 
+    consultarFavoritosConFiltro(propietario: IContactoConsulta, filtro: IFiltro): ReadonlyArray<ICorreoConsulta> {
+        return this.consultarFavoritos(propietario).filter((correo) => filtro.cumple(correo));
+    }
+
+    obtenerAsuntos(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<string> {
+        return this.consultarBandeja(propietario, tipo).map((correo) => correo.getAsunto());
+    }
+
+    obtenerCorreosQueCumplan(
+        propietario: IContactoConsulta,
+        tipo: TipoBandeja,
+        condicion: (correo: ICorreoConsulta) => boolean
+    ): ReadonlyArray<ICorreoConsulta> {
+        return this.consultarBandeja(propietario, tipo).filter(condicion);
+    }
+
         buscarCorreos(propietario: IContactoConsulta, texto: string): ReadonlyArray<ICorreoConsulta> {
         const buscado = texto.toLowerCase();
 
