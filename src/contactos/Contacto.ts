@@ -1,7 +1,7 @@
 import type { IContacto } from "./IContacto"
 
 
-
+// RF-03: Agenda de contactos
 export class Contacto implements IContacto {
     private _nombreCompleto: string 
     private readonly _direccion: string 

@@ -3,6 +3,7 @@ import { TipoBandeja } from "./TipoBandeja"
 import { ICorreoConsulta } from "../correos/ICorreoConsulta"
 import { Correo } from "../correos/Correo"
 
+// RF-06: Bandejas (Entrada/Enviados/Borradores/Eliminados)
 export class Bandeja implements IBandeja {
     private readonly _tipo: TipoBandeja;
     private _correos: Correo[] = [];

@@ -2,6 +2,7 @@ import { describe, test, expect } from 'vitest';
 import { GestorCorreos } from '../src/gestor/GestorCorreos';
 import { TipoBandeja } from '../src/bandejas/TipoBandeja';
 import { Contacto } from '../src/contactos/Contacto';
+import { Filtros } from '../src/filtros/Filtros';
 
 describe('GestorCorreos - Borradores (RF-07)', () => {
     const remitente = new Contacto('Ignacio Cremona', 'ignacio@ucp.edu.ar');
@@ -354,5 +355,29 @@ describe('GestorCorreos - Favoritos (RF-09)', () => {
         gestor.restaurarCorreo(correo.getId());
 
         expect(gestor.consultarFavoritos(destinatario).map((c) => c.getId())).toContain(correo.getId());
+    });
+});
+
+describe('GestorCorreos - filtro de paridad sobre un lote grande', () => {
+    const remitente = new Contacto('Ignacio Cremona', 'ignacio@ucp.edu.ar');
+    const destinatario = new Contacto('Fabrizio Graciosi', 'fabrizio@ucp.edu.ar');
+
+    test('al enviar 100 correos a un destinatario, filtrar por id par devuelve solo los pares', () => {
+        const gestor = new GestorCorreos();
+
+        for (let i = 1; i <= 100; i++) {
+            gestor.enviarCorreo(remitente, `Correo ${i}`, 'Cuerpo', [destinatario]);
+        }
+
+        const bandejaCompleta = gestor.consultarBandeja(destinatario, TipoBandeja.ENTRADA);
+        const filtroPar = Filtros.personalizado((correo) => correo.getId() % 2 === 0);
+        const pares = gestor.consultarConFiltro(destinatario, TipoBandeja.ENTRADA, filtroPar);
+
+        expect(bandejaCompleta.length).toBe(100);
+        expect(pares.length).toBeGreaterThan(0);
+        pares.forEach((correo) => expect(correo.getId() % 2).toBe(0));
+
+        const impares = bandejaCompleta.filter((correo) => correo.getId() % 2 !== 0);
+        expect(pares.length + impares.length).toBe(bandejaCompleta.length);
     });
 });

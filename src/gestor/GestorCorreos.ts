@@ -86,6 +86,7 @@ export class GestorCorreos implements IGestorCorreos {
         return puedeEnviarse;
     }
 
+    // RF-07: eliminación lógica + restauración al origen
     eliminarCorreo(id: number): boolean {
         const ubicacion = this._ubicacionActual.get(id);
         const puedeEliminarse = ubicacion !== undefined && ubicacion.tipo !== TipoBandeja.ELIMINADOS;
@@ -128,12 +129,13 @@ export class GestorCorreos implements IGestorCorreos {
     
     }
 
-    enviarCorreo(
+    enviarCorreo( // RF-02: Envío de correo
         remitente: IContactoConsulta,
         asunto: string,
         cuerpo: string,
         destinatarios: ReadonlyArray<IContactoConsulta>
     ): ICorreoConsulta | undefined {
+        // remitente: IContactoConsulta -> Sustitución de Liskov (L): acepta cualquier implementación
         const destinatariosUnicos = this.destinatariosUnicos(destinatarios);
         const copiaRemitente = new Correo(this.generarId(), asunto, cuerpo, remitente, [...destinatariosUnicos]);
         const puedeEnviarse = copiaRemitente.esValido();
@@ -163,12 +165,12 @@ export class GestorCorreos implements IGestorCorreos {
 
         return correo !== undefined;
     }
-
+    // RF-09: favoritos — ejemplo de POLIMORFISMO en tu propio código
     consultarFavoritos(propietario: IContactoConsulta): ReadonlyArray<ICorreoConsulta> {
     return Object.values(TipoBandeja)
         .filter((tipo) => tipo !== TipoBandeja.ELIMINADOS)
         .flatMap((tipo) => this.consultarConFiltro(propietario, tipo, Filtros.favorito()));
-    }
+    } // consultarConFiltro llama filtro.cumple(correo) sin saber qué IFiltro es -> polimorfismo
 
     consultarBandeja(propietario: IContactoConsulta, tipo: TipoBandeja): ReadonlyArray<ICorreoConsulta> {
         const buzon = this._buzones.get(this.normalizar(propietario));
@@ -215,7 +217,7 @@ export class GestorCorreos implements IGestorCorreos {
     ): ReadonlyArray<ICorreoConsulta> {
         return this.consultarBandeja(propietario, tipo).filter(condicion);
     }
-
+        // RF-04: búsqueda (solo lectura: ICorreoConsulta/IContactoConsulta -> segregación de interfaces)
         buscarCorreos(propietario: IContactoConsulta, texto: string): ReadonlyArray<ICorreoConsulta> {
         const buscado = texto.toLowerCase();
 
@@ -255,7 +257,7 @@ export class GestorCorreos implements IGestorCorreos {
         buzon.agregar(correo, destino);
         this._ubicacionActual.set(correo.getId(), { direccion: clave, tipo: destino });
     }
-
+    // DEBILIDAD reconocida (D floja): crea objetos concretos directamente
     private crearBuzon(clave: string): Buzon {
         const buzon = new Buzon();
         this._buzones.set(clave, buzon);

@@ -55,7 +55,7 @@ export class Filtros {
     static conNombre(nombre: string, filtro: IFiltro): IFiltro {
         return new Filtro(nombre, (correo) => filtro.cumple(correo));
     }
-
+    // O de SOLID (abierto/cerrado): combina sin modificar nada existente
     static todos(filtros: ReadonlyArray<IFiltro>): IFiltro {
         return new Filtro('todos', (correo) => filtros.every((filtro) => filtro.cumple(correo)));
     }

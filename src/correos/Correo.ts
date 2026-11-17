@@ -1,7 +1,7 @@
 import type { IContactoConsulta } from "../contactos/IContactoConsulta"
 import type { ICorreo } from "./ICorreo"
 
-
+// RF-01: Correo electrónico
 export class Correo implements ICorreo {
 
     private readonly _id: number
@@ -9,7 +9,8 @@ export class Correo implements ICorreo {
     private _asunto: string
 
     private _cuerpo: string
-    private readonly _remitente: IContactoConsulta
+    private readonly _remitente: IContactoConsulta // Inversión de dependencias (D): depende de la interfaz, no de Contacto
+
 
     private _destinatarios: IContactoConsulta[]
     private _leido: boolean
@@ -66,8 +67,7 @@ export class Correo implements ICorreo {
         return this._favorito
     
     }
-
-        esBorradorValido(): boolean {
+    esBorradorValido(): boolean { // RF-07: borrador = mínimo válido
 
         const idValido = this._id > 0 && this._id % 1 === 0
 
@@ -77,7 +77,8 @@ export class Correo implements ICorreo {
         return idValido && remitenteValido && destinatariosValidos
     }
 
-    esValido(): boolean {
+    esValido(): boolean { // RF-02/07: válido para enviarse
+
 
         const tieneAsunto = this._asunto.trim().length > 0
 
@@ -120,7 +121,7 @@ export class Correo implements ICorreo {
     }
 
         
-    clonar(nuevoId: number): Correo {
+    clonar(nuevoId: number): Correo { // Revisión intermedia: copia independiente por destinatario
         return new Correo(nuevoId, this._asunto, this._cuerpo, this._remitente, [...this._destinatarios])
     }
 
